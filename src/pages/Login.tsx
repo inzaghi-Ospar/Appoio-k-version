@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const Index = () => {
+const Login = () => {
+  const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [senha, setSenha] = useState("");
 
@@ -53,6 +55,7 @@ const Index = () => {
             type="button"
             variant="outline"
             className="w-full rounded-full"
+            onClick={() => navigate("/cadastro")}
           >
             Cadastrar
           </Button>
@@ -62,4 +65,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Login;
