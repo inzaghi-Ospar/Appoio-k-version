@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,21 @@ const Login = () => {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [senha, setSenha] = useState("");
+
+  useEffect(() => {
+    // Adiciona uma entrada no histórico para "segurar" o botão de voltar
+    window.history.pushState({ appoio: true }, "", window.location.href);
+
+    const handlePopState = () => {
+      // Tenta fechar o app (funciona em PWA / WebView)
+      window.close();
+      // Se o navegador bloquear o fechamento, mantém o usuário no login
+      window.history.pushState({ appoio: true }, "", window.location.href);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F4F1EC] p-4">
