@@ -11,17 +11,40 @@ const Cadastro = () => {
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
-  const [erro, setErro] = useState("");
+  const [erroNome, setErroNome] = useState("");
+  const [erroTelefone, setErroTelefone] = useState("");
+  const [erroSenha, setErroSenha] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (senha !== confirmarSenha) {
-      setErro("As senhas não coincidem. Digite a mesma senha nos dois campos.");
-      return;
+    let temErro = false;
+
+    const partesNome = nomeCompleto.trim().split(/\s+/).filter(Boolean);
+    if (partesNome.length < 2) {
+      setErroNome("Digite seu nome completo (nome e sobrenome).");
+      temErro = true;
+    } else {
+      setErroNome("");
     }
 
-    setErro("");
+    const digitos = telefone.replace(/\D/g, "");
+    if (!/^\d{10,11}$/.test(digitos)) {
+      setErroTelefone("Telefone em formato inválido. Ex: (21) 91234-5678");
+      temErro = true;
+    } else {
+      setErroTelefone("");
+    }
+
+    if (senha !== confirmarSenha) {
+      setErroSenha("As senhas não coincidem. Digite a mesma senha nos dois campos.");
+      temErro = true;
+    } else {
+      setErroSenha("");
+    }
+
+    if (temErro) return;
+
     // Aqui entra a função de cadastro (ainda não implementada)
   };
 
@@ -56,8 +79,13 @@ const Cadastro = () => {
               id="nomeCompleto"
               placeholder="Digite seu nome completo"
               value={nomeCompleto}
-              onChange={(e) => setNomeCompleto(e.target.value)}
+              onChange={(e) => {
+                setNomeCompleto(e.target.value);
+                setErroNome("");
+              }}
+              className={erroNome ? "border-destructive" : ""}
             />
+            {erroNome && <p className="text-sm text-destructive">{erroNome}</p>}
           </div>
 
           <div className="space-y-2">
@@ -67,8 +95,15 @@ const Cadastro = () => {
               type="tel"
               placeholder="(00) 00000-0000"
               value={telefone}
-              onChange={(e) => setTelefone(e.target.value)}
+              onChange={(e) => {
+                setTelefone(e.target.value);
+                setErroTelefone("");
+              }}
+              className={erroTelefone ? "border-destructive" : ""}
             />
+            {erroTelefone && (
+              <p className="text-sm text-destructive">{erroTelefone}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -80,7 +115,7 @@ const Cadastro = () => {
               value={senha}
               onChange={(e) => {
                 setSenha(e.target.value);
-                setErro("");
+                setErroSenha("");
               }}
             />
           </div>
@@ -94,12 +129,12 @@ const Cadastro = () => {
               value={confirmarSenha}
               onChange={(e) => {
                 setConfirmarSenha(e.target.value);
-                setErro("");
+                setErroSenha("");
               }}
-              className={erro ? "border-destructive" : ""}
+              className={erroSenha ? "border-destructive" : ""}
             />
-            {erro && (
-              <p className="text-sm text-destructive">{erro}</p>
+            {erroSenha && (
+              <p className="text-sm text-destructive">{erroSenha}</p>
             )}
           </div>
 
