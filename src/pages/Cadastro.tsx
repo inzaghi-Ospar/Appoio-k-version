@@ -17,7 +17,7 @@ const Cadastro = () => {
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-8">
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
