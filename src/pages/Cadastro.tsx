@@ -11,6 +11,19 @@ const Cadastro = () => {
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [erro, setErro] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (senha !== confirmarSenha) {
+      setErro("As senhas não coincidem. Digite a mesma senha nos dois campos.");
+      return;
+    }
+
+    setErro("");
+    // Aqui entra a função de cadastro (ainda não implementada)
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F4F1EC] p-4">
@@ -36,7 +49,7 @@ const Cadastro = () => {
           </p>
         </div>
 
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <Label htmlFor="nomeCompleto">Nome completo</Label>
             <Input
@@ -65,7 +78,10 @@ const Cadastro = () => {
               type="password"
               placeholder="Crie sua senha"
               value={senha}
-              onChange={(e) => setSenha(e.target.value)}
+              onChange={(e) => {
+                setSenha(e.target.value);
+                setErro("");
+              }}
             />
           </div>
 
@@ -76,8 +92,15 @@ const Cadastro = () => {
               type="password"
               placeholder="Repita sua senha"
               value={confirmarSenha}
-              onChange={(e) => setConfirmarSenha(e.target.value)}
+              onChange={(e) => {
+                setConfirmarSenha(e.target.value);
+                setErro("");
+              }}
+              className={erro ? "border-destructive" : ""}
             />
+            {erro && (
+              <p className="text-sm text-destructive">{erro}</p>
+            )}
           </div>
 
           <Button type="submit" className="w-full rounded-full">
