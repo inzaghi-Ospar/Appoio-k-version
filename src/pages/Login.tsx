@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Package } from "lucide-react";
@@ -10,23 +9,6 @@ const Login = () => {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [senha, setSenha] = useState("");
-
-  useEffect(() => {
-    const handlePopState = (event: PopStateEvent) => {
-      if (history.length <= 1) {
-        event.preventDefault();
-        window.close();
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-
-    history.pushState(null, "", window.location.pathname);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F4F1EC] p-4">
