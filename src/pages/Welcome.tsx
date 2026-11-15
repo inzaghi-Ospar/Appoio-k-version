@@ -12,8 +12,8 @@ const Welcome = () => {
           <Package className="w-10 h-10" />
         </div>
         <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">
-          Bem-vindo ao "appoio"!
-        </h1>
+                  Bem-vindo ao appoio
+                </h1>
         <p className="text-base text-slate-500 max-w-xs">
           Gerencie seus pedidos, organize seu estoque e faça mais negócios de forma simples e rápida.
         </p>
