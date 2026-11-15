@@ -24,6 +24,7 @@ const Cadastro = () => {
   const [erroNome, setErroNome] = useState("");
   const [erroTelefone, setErroTelefone] = useState("");
   const [erroSenha, setErroSenha] = useState("");
+  const [erroConfirmarSenha, setErroConfirmarSenha] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,14 +48,17 @@ const Cadastro = () => {
     }
 
     if (senha.length < 4) {
-          setErroSenha("A senha deve ter no mínimo 4 caracteres.");
-          temErro = true;
-        } else if (senha !== confirmarSenha) {
-          setErroSenha("As senhas não coincidem. Digite a mesma senha nos dois campos.");
-          temErro = true;
-        } else {
-          setErroSenha("");
-        }
+      setErroSenha("A senha deve ter no mínimo 4 caracteres.");
+      setErroConfirmarSenha("");
+      temErro = true;
+    } else if (senha !== confirmarSenha) {
+      setErroSenha("");
+      setErroConfirmarSenha("As senhas não coincidem. Digite a mesma senha nos dois campos.");
+      temErro = true;
+    } else {
+      setErroSenha("");
+      setErroConfirmarSenha("");
+    }
 
     if (temErro) return;
 
@@ -130,7 +134,11 @@ const Cadastro = () => {
                 setSenha(e.target.value);
                 setErroSenha("");
               }}
+              className={erroSenha ? "border-destructive" : ""}
             />
+            {erroSenha && (
+              <p className="text-sm text-destructive">{erroSenha}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -142,12 +150,12 @@ const Cadastro = () => {
               value={confirmarSenha}
               onChange={(e) => {
                 setConfirmarSenha(e.target.value);
-                setErroSenha("");
+                setErroConfirmarSenha("");
               }}
-              className={erroSenha ? "border-destructive" : ""}
+              className={erroConfirmarSenha ? "border-destructive" : ""}
             />
-            {erroSenha && (
-              <p className="text-sm text-destructive">{erroSenha}</p>
+            {erroConfirmarSenha && (
+              <p className="text-sm text-destructive">{erroConfirmarSenha}</p>
             )}
           </div>
 
