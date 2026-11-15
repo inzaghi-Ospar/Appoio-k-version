@@ -46,12 +46,15 @@ const Cadastro = () => {
       setErroTelefone("");
     }
 
-    if (senha !== confirmarSenha) {
-      setErroSenha("As senhas não coincidem. Digite a mesma senha nos dois campos.");
-      temErro = true;
-    } else {
-      setErroSenha("");
-    }
+    if (senha.length < 4) {
+          setErroSenha("A senha deve ter no mínimo 4 caracteres.");
+          temErro = true;
+        } else if (senha !== confirmarSenha) {
+          setErroSenha("As senhas não coincidem. Digite a mesma senha nos dois campos.");
+          temErro = true;
+        } else {
+          setErroSenha("");
+        }
 
     if (temErro) return;
 
