@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const formatarTelefone = (valor: string) => {
+  const digitos = valor.replace(/\D/g, "").slice(0, 11);
+  if (!digitos) return "";
+  if (digitos.length <= 2) return `(${digitos}`;
+  if (digitos.length <= 6) return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+  if (digitos.length <= 10)
+    return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`;
+  return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+};
+
 const Cadastro = () => {
   const navigate = useNavigate();
   const [nomeCompleto, setNomeCompleto] = useState("");
@@ -96,7 +106,7 @@ const Cadastro = () => {
               placeholder="(00) 00000-0000"
               value={telefone}
               onChange={(e) => {
-                setTelefone(e.target.value);
+                setTelefone(formatarTelefone(e.target.value));
                 setErroTelefone("");
               }}
               className={erroTelefone ? "border-destructive" : ""}
