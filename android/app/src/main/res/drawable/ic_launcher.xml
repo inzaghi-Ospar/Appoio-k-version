@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/ic_launcher_background"
+    android:foreground="@drawable/ic_launcher_foreground" />
+
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_launcher_background"
+    android:icon="@drawable/ic_launcher_foreground"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48" />
+
+<drawable name="ic_launcher_background" type="mipmap">
+    <bitmap
+        android:src="@mipmap/ic_launcher_background"
+        android:tint="@color/ic_launcher_background" />
+</drawable>
+
+<drawable name="ic_launcher_foreground" type="mipmap">
+    <bitmap
+        android:src="@mipmap/ic_launcher_foreground"
+        android:tint="@color/ic_launcher_foreground" />
+</drawable>
