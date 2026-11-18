@@ -4,6 +4,7 @@ import { ArrowLeft, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 
 const formatarTelefone = (valor: string) => {
   const digitos = valor.replace(/\D/g, "").slice(0, 11);
@@ -60,8 +61,10 @@ const Cadastro = () => {
   const [erroCpf, setErroCpf] = useState("");
   const [erroSenha, setErroSenha] = useState("");
   const [erroConfirmarSenha, setErroConfirmarSenha] = useState("");
+  const [erroGeral, setErroGeral] = useState("");
+  const [carregando, setCarregando] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     let temErro = false;
@@ -105,7 +108,60 @@ const Cadastro = () => {
 
     if (temErro) return;
 
-    // Aqui entra a função de cadastro (ainda não implementada)
+    setErroGeral("");
+    setCarregando(true);
+
+    try {
+      const { data: cpfExistente, error: erroConsultaCpf } = await supabase
+        .from("cadastros")
+        .select("id")
+        .eq("cpf", cpf)
+        .maybeSingle();
+
+      if (erroConsultaCpf) {
+        setErroGeral("Erro ao verificar cadastro. Tente novamente.");
+        return;
+      }
+
+      const { data: nomeExistente, error: erroConsultaNome } = await supabase
+        .from("cadastros")
+        .select("id")
+        .ilike("nome_completo", nomeCompleto.trim())
+        .maybeSingle();
+
+      if (erroConsultaNome) {
+        setErroGeral("Erro ao verificar cadastro. Tente novamente.");
+        return;
+      }
+
+      if (cpfExistente) {
+        setErroCpf("Já existe um cadastro com este CPF.");
+      }
+      if (nomeExistente) {
+        setErroNome("Já existe um cadastro com este nome.");
+      }
+      if (cpfExistente || nomeExistente) {
+        return;
+      }
+
+      const { error: erroInsercao } = await supabase.from("cadastros").insert({
+        nome_completo: nomeCompleto.trim(),
+        telefone,
+        cpf,
+        senha,
+      });
+
+      if (erroInsercao) {
+        setErroGeral("Erro ao criar cadastro. Tente novamente.");
+        return;
+      }
+
+      navigate("/login");
+    } catch {
+      setErroGeral("Erro inesperado. Tente novamente.");
+    } finally {
+      setCarregando(false);
+    }
   };
 
   return (
@@ -133,6 +189,9 @@ const Cadastro = () => {
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
+          {erroGeral && (
+            <p className="text-sm text-destructive text-center">{erroGeral}</p>
+          )}
           <div className="space-y-2">
             <Label htmlFor="nomeCompleto">Nome completo</Label>
             <Input
@@ -218,8 +277,8 @@ const Cadastro = () => {
             )}
           </div>
 
-          <Button type="submit" className="w-full rounded-full">
-            Confirmar cadastro
+          <Button type="submit" className="w-full rounded-full" disabled={carregando}>
+            {carregando ? "Verificando..." : "Confirmar cadastro"}
           </Button>
         </form>
       </div>
