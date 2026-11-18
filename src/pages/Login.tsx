@@ -4,26 +4,53 @@ import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
-    // Adiciona uma entrada no histórico para "segurar" o botão de voltar
     window.history.pushState({ appoio: true }, "", window.location.href);
 
     const handlePopState = () => {
-      // Tenta fechar o app (funciona em PWA / WebView)
       window.close();
-      // Se o navegador bloquear o fechamento, mantém o usuário no login
       window.history.pushState({ appoio: true }, "", window.location.href);
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErro("");
+    setCarregando(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("cadastros")
+        .select("nome_completo")
+        .ilike("nome_completo", nome.trim())
+        .eq("senha", senha)
+        .maybeSingle();
+
+      if (error || !data) {
+        setErro("Nome ou senha incorretos.");
+        return;
+      }
+
+      localStorage.setItem("usuario_nome", data.nome_completo);
+      navigate("/");
+    } catch {
+      setErro("Erro ao fazer login. Tente novamente.");
+    } finally {
+      setCarregando(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F4F1EC] p-4">
@@ -40,7 +67,9 @@ const Login = () => {
           </p>
         </div>
 
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          {erro && <p className="text-sm text-destructive text-center">{erro}</p>}
+
           <div className="space-y-2">
             <Label htmlFor="nome">Nome</Label>
             <Input
@@ -62,8 +91,8 @@ const Login = () => {
             />
           </div>
 
-          <Button type="submit" className="w-full rounded-full">
-            Entrar
+          <Button type="submit" className="w-full rounded-full" disabled={carregando}>
+            {carregando ? "Entrando..." : "Entrar"}
           </Button>
 
           <Button
