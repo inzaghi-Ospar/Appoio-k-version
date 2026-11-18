@@ -74,6 +74,15 @@ const Login = () => {
           >
             Cadastrar
           </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full text-sm text-slate-500 hover:text-slate-800"
+            onClick={() => navigate("/esqueci-senha")}
+          >
+            Esqueceu sua senha?
+          </Button>
         </form>
       </div>
     </div>
