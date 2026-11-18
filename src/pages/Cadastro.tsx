@@ -15,14 +15,49 @@ const formatarTelefone = (valor: string) => {
   return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
 };
 
+const formatarCpf = (valor: string) => {
+  const digitos = valor.replace(/\D/g, "").slice(0, 11);
+  if (!digitos) return "";
+  if (digitos.length <= 3) return digitos;
+  if (digitos.length <= 6) return `${digitos.slice(0, 3)}.${digitos.slice(3)}`;
+  if (digitos.length <= 9) return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6)}`;
+  return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-${digitos.slice(9)}`;
+};
+
+const validarCpf = (cpf: string) => {
+  const digitos = cpf.replace(/\D/g, "");
+  if (digitos.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(digitos)) return false;
+
+  let soma = 0;
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(digitos[i]) * (10 - i);
+  }
+  let resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(digitos[9])) return false;
+
+  soma = 0;
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(digitos[i]) * (11 - i);
+  }
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(digitos[10])) return false;
+
+  return true;
+};
+
 const Cadastro = () => {
   const navigate = useNavigate();
   const [nomeCompleto, setNomeCompleto] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [cpf, setCpf] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [erroNome, setErroNome] = useState("");
   const [erroTelefone, setErroTelefone] = useState("");
+  const [erroCpf, setErroCpf] = useState("");
   const [erroSenha, setErroSenha] = useState("");
   const [erroConfirmarSenha, setErroConfirmarSenha] = useState("");
 
@@ -39,12 +74,20 @@ const Cadastro = () => {
       setErroNome("");
     }
 
-    const digitos = telefone.replace(/\D/g, "");
-    if (!/^\d{10,11}$/.test(digitos)) {
+    const digitosTelefone = telefone.replace(/\D/g, "");
+    if (!/^\d{10,11}$/.test(digitosTelefone)) {
       setErroTelefone("Telefone em formato inválido. Ex: (21) 91234-5678");
       temErro = true;
     } else {
       setErroTelefone("");
+    }
+
+    const digitosCpf = cpf.replace(/\D/g, "");
+    if (!validarCpf(digitosCpf)) {
+      setErroCpf("CPF inválido. Digite um CPF válido.");
+      temErro = true;
+    } else {
+      setErroCpf("");
     }
 
     if (senha.length < 4) {
@@ -103,6 +146,22 @@ const Cadastro = () => {
               className={erroNome ? "border-destructive" : ""}
             />
             {erroNome && <p className="text-sm text-destructive">{erroNome}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cpf">CPF</Label>
+            <Input
+              id="cpf"
+              placeholder="000.000.000-00"
+              value={cpf}
+              onChange={(e) => {
+                setCpf(formatarCpf(e.target.value));
+                setErroCpf("");
+              }}
+              className={erroCpf ? "border-destructive" : ""}
+              maxLength={14}
+            />
+            {erroCpf && <p className="text-sm text-destructive">{erroCpf}</p>}
           </div>
 
           <div className="space-y-2">
