@@ -14,13 +14,18 @@ const Index = () => {
   const [erro, setErro] = useState("");
 
   useEffect(() => {
-    const nomeSalvo = localStorage.getItem("usuario_nome");
-    if (nomeSalvo) {
-      setUsuarioNome(nomeSalvo);
-    } else {
-      navigate("/login");
-    }
-  }, [navigate]);
+      const nomeSalvo = localStorage.getItem("usuario_nome");
+      if (nomeSalvo) {
+        setUsuarioNome(nomeSalvo);
+      } else {
+        // Para desenvolvimento: permite acesso direto a /home com usuário de teste
+        // Em produção, remova este bloco e descomente o redirect para /login
+        setUsuarioNome("Usuário Teste");
+        localStorage.setItem("usuario_nome", "Usuário Teste");
+        
+        // navigate("/login");
+      }
+    }, [navigate]);
 
   useEffect(() => {
     const carregarEncomendas = async () => {
