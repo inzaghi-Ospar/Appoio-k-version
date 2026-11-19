@@ -22,7 +22,7 @@ const AnimatedRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
-        <Route path="/home" element={<Index />} />
+        <Route path="/tela-inicial" element={<Index />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

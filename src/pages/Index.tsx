@@ -18,7 +18,7 @@ const Index = () => {
       if (nomeSalvo) {
         setUsuarioNome(nomeSalvo);
       } else {
-        // Para desenvolvimento: permite acesso direto a /home com usuário de teste
+        // Para desenvolvimento: permite acesso direto a /tela-inicial com usuário de teste
         // Em produção, remova este bloco e descomente o redirect para /login
         setUsuarioNome("Usuário Teste");
         localStorage.setItem("usuario_nome", "Usuário Teste");
