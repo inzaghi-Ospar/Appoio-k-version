@@ -44,7 +44,7 @@ const Login = () => {
       }
 
       localStorage.setItem("usuario_nome", data.nome_completo);
-      navigate("/");
+      navigate("/home");
     } catch {
       setErro("Erro ao fazer login. Tente novamente.");
     } finally {
