@@ -62,10 +62,10 @@ const Cadastro = () => {
   const [erroSenha, setErroSenha] = useState("");
   const [erroConfirmarSenha, setErroConfirmarSenha] = useState("");
   const [erroGeral, setErroGeral] = useState("");
-  const [carregando, setCarregando] = useState(false);
-  const [tipoUsuario, setTipoUsuario] = useState<"cliente" | "entregador" | "">(");
-
-  const handleSubmit = async (e: React.FormEvent) => {
+    const [carregando, setCarregando] = useState(false);
+    const [tipoUsuario, setTipoUsuario] = useState<string>("");
+   
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     let temErro = false;
