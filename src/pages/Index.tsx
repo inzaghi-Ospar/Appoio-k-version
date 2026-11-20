@@ -10,21 +10,22 @@ const Index = () => {
   const navigate = useNavigate();
   const [usuarioNome, setUsuarioNome] = useState("");
   const [encomendas, setEncomendas] = useState<any[]>([
-        {
-          id: "1",
-          nome_entregador: "Carlos Pereira",
-          nome_destinatario: "João Silva Santos",
-          created_at: new Date().toISOString(),
-          status: "pronta"
-        },
-        {
-          id: "2",
-          nome_entregador: "Ana Souza",
-          nome_destinatario: "Maria Oliveira Costa",
-          created_at: new Date(Date.now() - 3600000).toISOString(),
-          status: "pronta"
-        }
-      ]);
+          {
+            id: "1",
+            nome_entregador: "Carlos Pereira",
+            nome_destinatario: "João Silva Santos",
+            created_at: new Date().toISOString(),
+            status: "pronta"
+          },
+          {
+            id: "2",
+            nome_entregador: "Ana Souza",
+            nome_destinatario: "Maria Oliveira Costa",
+            created_at: new Date(Date.now() - 3600000).toISOString(),
+            status: "pronta"
+          }
+        ]);
+    const [confirmadas, setConfirmadas] = useState<Set<string>>(new Set());
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
 
@@ -131,32 +132,36 @@ const Index = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {encomendas.map((encomenda) => (
-                  <div
-                    key={encomenda.id}
-                    className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 text-indigo-600">
-                        <Package className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-slate-900">
-                          {encomenda.nome_entregador}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          {encomenda.nome_destinatario}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-slate-400">Chegou em</p>
-                      <p className="text-sm font-medium text-slate-700">
-                        {formatarData(encomenda.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                {encomendas.map((encomenda) => {
+                                  const jaConfirmada = confirmadas.has(encomenda.id);
+                
+                                  return (
+                                    <div
+                                      key={encomenda.id}
+                                      className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 text-indigo-600">
+                                          <Package className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                          <p className="font-semibold text-slate-900">
+                                            {encomenda.nome_entregador}
+                                          </p>
+                                          <p className="text-sm text-slate-500">
+                                            {encomenda.nome_destinatario}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-xs text-slate-400">Chegou em</p>
+                                        <p className="text-sm font-medium text-slate-700">
+                                          {formatarData(encomenda.created_at)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
               </div>
             )}
           </div>
