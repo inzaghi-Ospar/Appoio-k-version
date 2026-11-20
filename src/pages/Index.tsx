@@ -10,21 +10,21 @@ const Index = () => {
   const navigate = useNavigate();
   const [usuarioNome, setUsuarioNome] = useState("");
   const [encomendas, setEncomendas] = useState<any[]>([
-      {
-        id: "1",
-        codigo: "PKG-2024-001234",
-        nome_destinatario: "João Silva Santos",
-        created_at: new Date().toISOString(),
-        status: "pronta"
-      },
-      {
-        id: "2",
-        codigo: "PKG-2024-001235",
-        nome_destinatario: "Maria Oliveira Costa",
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        status: "pronta"
-      }
-    ]);
+        {
+          id: "1",
+          nome_entregador: "Carlos Pereira",
+          nome_destinatario: "João Silva Santos",
+          created_at: new Date().toISOString(),
+          status: "pronta"
+        },
+        {
+          id: "2",
+          nome_entregador: "Ana Souza",
+          nome_destinatario: "Maria Oliveira Costa",
+          created_at: new Date(Date.now() - 3600000).toISOString(),
+          status: "pronta"
+        }
+      ]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
 
@@ -142,7 +142,7 @@ const Index = () => {
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">
-                          {encomenda.codigo}
+                          {encomenda.nome_entregador}
                         </p>
                         <p className="text-sm text-slate-500">
                           {encomenda.nome_destinatario}
