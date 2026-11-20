@@ -92,9 +92,9 @@ const Index = () => {
           </div>
 
           <div className="bg-white rounded-3xl shadow-xl p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
-              Encomendas disponíveis
-            </h2>
+                      <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                        Encomendas pendentes de retirada
+                      </h2>
 
             {carregando ? (
               <div className="flex items-center justify-center py-12">
