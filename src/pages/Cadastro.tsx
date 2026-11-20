@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft, Package, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,6 +63,7 @@ const Cadastro = () => {
   const [erroConfirmarSenha, setErroConfirmarSenha] = useState("");
   const [erroGeral, setErroGeral] = useState("");
   const [carregando, setCarregando] = useState(false);
+  const [tipoUsuario, setTipoUsuario] = useState<"cliente" | "entregador" | "">(");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,6 +105,13 @@ const Cadastro = () => {
     } else {
       setErroSenha("");
       setErroConfirmarSenha("");
+    }
+
+    if (!tipoUsuario) {
+      setErroGeral("Selecione se é cliente ou entregador.");
+      temErro = true;
+    } else {
+      setErroGeral("");
     }
 
     if (temErro) return;
@@ -149,6 +157,7 @@ const Cadastro = () => {
         telefone,
         cpf,
         senha,
+        tipo_usuario: tipoUsuario,
       });
 
       if (erroInsercao) {
@@ -192,6 +201,7 @@ const Cadastro = () => {
           {erroGeral && (
             <p className="text-sm text-destructive text-center">{erroGeral}</p>
           )}
+
           <div className="space-y-2">
             <Label htmlFor="nomeCompleto">Nome completo</Label>
             <Input
@@ -275,6 +285,37 @@ const Cadastro = () => {
             {erroConfirmarSenha && (
               <p className="text-sm text-destructive">{erroConfirmarSenha}</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm text-slate-500 font-medium">Tipo de usuário</p>
+            <div className="flex gap-4">
+              <label
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${tipoUsuario === "cliente" ? "bg-indigo-100 text-indigo-600 border-indigo-500" : "border-slate-300 text-slate-500 hover:text-slate-700 transition-colors"}`}
+                onClick={() => setTipoUsuario("cliente")}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && setTipoUsuario("cliente")}
+              >
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                  <User className="w-3 h-3" />
+                </span>
+                Cliente
+              </label>
+
+              <label
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${tipoUsuario === "entregador" ? "bg-indigo-100 text-indigo-600 border-indigo-500" : "border-slate-300 text-slate-500 hover:text-slate-700 transition-colors"}`}
+                onClick={() => setTipoUsuario("entregador")}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && setTipoUsuario("entregador")}
+              >
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                  <Package className="w-3 h-3" />
+                </span>
+                Entregador
+              </label>
+            </div>
           </div>
 
           <Button type="submit" className="w-full rounded-full" disabled={carregando}>
