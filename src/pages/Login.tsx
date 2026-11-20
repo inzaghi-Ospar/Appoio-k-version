@@ -105,14 +105,23 @@ const Login = () => {
           </Button>
 
           <Button
-            type="button"
-            variant="ghost"
-            className="w-full text-sm text-slate-500 hover:text-slate-800"
-            onClick={() => navigate("/esqueci-senha")}
-          >
-            Esqueceu sua senha?
-          </Button>
-        </form>
+                      type="button"
+                      variant="ghost"
+                      className="w-full text-sm text-slate-500 hover:text-slate-800"
+                      onClick={() => navigate("/esqueci-senha")}
+                    >
+                      Esqueceu sua senha?
+                    </Button>
+          
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full rounded-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                      onClick={() => navigate("/login-entregador")}
+                    >
+                      Login modo entregador
+                    </Button>
+                  </form>
       </div>
     </div>
   );
