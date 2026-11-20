@@ -62,10 +62,11 @@ const Cadastro = () => {
   const [erroSenha, setErroSenha] = useState("");
   const [erroConfirmarSenha, setErroConfirmarSenha] = useState("");
   const [erroGeral, setErroGeral] = useState("");
-    const [carregando, setCarregando] = useState(false);
-    const [tipoUsuario, setTipoUsuario] = useState<string>("");
-   
-    const handleSubmit = async (e: React.FormEvent) => {
+  const [carregando, setCarregando] = useState(false);
+  const [tipoUsuario, setTipoUsuario] = useState<string>("");
+  const [tipoUsuarioSelecionado, setTipoUsuarioSelecionado] = useState<"cliente" | "entregador">("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     let temErro = false;
@@ -107,7 +108,7 @@ const Cadastro = () => {
       setErroConfirmarSenha("");
     }
 
-    if (!tipoUsuario) {
+    if (!tipoUsuarioSelecionado) {
       setErroGeral("Selecione se é cliente ou entregador.");
       temErro = true;
     } else {
@@ -157,7 +158,7 @@ const Cadastro = () => {
         telefone,
         cpf,
         senha,
-        tipo_usuario: tipoUsuario,
+        tipo_usuario: tipoUsuarioSelecionado,
       });
 
       if (erroInsercao) {
@@ -291,11 +292,11 @@ const Cadastro = () => {
             <p className="text-sm text-slate-500 font-medium">Tipo de usuário</p>
             <div className="flex gap-4">
               <label
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${tipoUsuario === "cliente" ? "bg-indigo-100 text-indigo-600 border-indigo-500" : "border-slate-300 text-slate-500 hover:text-slate-700 transition-colors"}`}
-                onClick={() => setTipoUsuario("cliente")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${tipoUsuarioSelecionado === "cliente" ? "bg-indigo-100 text-indigo-600 border-indigo-500" : "border-slate-300 text-slate-500 hover:text-slate-700 transition-colors"}`}
+                onClick={() => setTipoUsuarioSelecionado("cliente")}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && setTipoUsuario("cliente")}
+                onKeyDown={(e) => e.key === "Enter" && setTipoUsuarioSelecionado("cliente")}
               >
                 <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
                   <User className="w-3 h-3" />
@@ -304,11 +305,11 @@ const Cadastro = () => {
               </label>
 
               <label
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${tipoUsuario === "entregador" ? "bg-indigo-100 text-indigo-600 border-indigo-500" : "border-slate-300 text-slate-500 hover:text-slate-700 transition-colors"}`}
-                onClick={() => setTipoUsuario("entregador")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${tipoUsuarioSelecionado === "entregador" ? "bg-indigo-100 text-indigo-600 border-indigo-500" : "border-slate-300 text-slate-500 hover:text-slate-700 transition-colors"}`}
+                onClick={() => setTipoUsuarioSelecionado("entregador")}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && setTipoUsuario("entregador")}
+                onKeyDown={(e) => e.key === "Enter" && setTipoUsuarioSelecionado("entregador")}
               >
                 <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
                   <Package className="w-3 h-3" />
