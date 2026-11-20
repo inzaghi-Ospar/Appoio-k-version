@@ -64,7 +64,7 @@ const Cadastro = () => {
   const [erroGeral, setErroGeral] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [tipoUsuario, setTipoUsuario] = useState<string>("");
-  const [tipoUsuarioSelecionado, setTipoUsuarioSelecionado] = useState<"cliente" | "entregador">("");
+  const [tipoUsuarioSelecionado, setTipoUsuarioSelecionado] = useState<"cliente" | "entregador" | "">("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
