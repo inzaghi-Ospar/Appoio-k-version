@@ -28,6 +28,7 @@ const Index = () => {
     const [confirmadas, setConfirmadas] = useState<Set<string>>(new Set());
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
+  const [mostrarConfirmacaoLogout, setMostrarConfirmacaoLogout] = useState(false);
 
   useEffect(() => {
       const nomeSalvo = localStorage.getItem("usuario_nome");
@@ -94,7 +95,7 @@ const Index = () => {
         <div className="flex items-center justify-between mb-6 p-4">
           <button
             type="button"
-            onClick={() => navigate("/login")}
+            onClick={() => setMostrarConfirmacaoLogout(true)}
             className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -184,6 +185,35 @@ const Index = () => {
           </button>
         </div>
       </div>
+
+      {mostrarConfirmacaoLogout && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setMostrarConfirmacaoLogout(false)}>
+          <div className="bg-white rounded-3xl shadow-xl p-6 w-full max-w-sm mx-auto" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Sair da conta?</h3>
+            <p className="text-sm text-slate-500 mb-6">Tem certeza que deseja sair da sua conta?</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setMostrarConfirmacaoLogout(false)}
+                className="flex-1 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem("usuario_nome");
+                  setMostrarConfirmacaoLogout(false);
+                  navigate("/login");
+                }}
+                className="flex-1 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+              >
+                Sim, sair
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
