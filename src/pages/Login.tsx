@@ -46,6 +46,7 @@ const Login = () => {
       }
 
       if (!data) {
+        console.log("Login falhou - nome:", nome.trim(), "senha:", senha.trim());
         setErro("Nome ou senha incorretos.");
         return;
       }
