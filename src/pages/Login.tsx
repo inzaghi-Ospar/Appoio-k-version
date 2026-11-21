@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Eye, EyeOff, Copy, Search } from "lucide-react";
+import { Package, Eye, EyeOff, Copy, Search, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ const Login = () => {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [mostrarBuscaCpf, setMostrarBuscaCpf] = useState(false);
+  const [modoBuscaCpf, setModoBuscaCpf] = useState(false);
   const [cpfBusca, setCpfBusca] = useState("");
   const [usuarioEncontradoCpf, setUsuarioEncontradoCpf] = useState<{ nome_completo: string; senha: string } | null>(null);
   const [buscandoCpf, setBuscandoCpf] = useState(false);
@@ -41,10 +41,17 @@ const Login = () => {
     if (usuarioEncontradoCpf) {
       navigator.clipboard.writeText(usuarioEncontradoCpf.nome_completo);
       setNome(usuarioEncontradoCpf.nome_completo);
-      setMostrarBuscaCpf(false);
+      setModoBuscaCpf(false);
       setUsuarioEncontradoCpf(null);
       setCpfBusca("");
     }
+  };
+
+  const voltarLoginNormal = () => {
+    setModoBuscaCpf(false);
+    setUsuarioEncontradoCpf(null);
+    setCpfBusca("");
+    setErro("");
   };
 
   const buscarPorCpf = async () => {
@@ -126,156 +133,238 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F4F1EC] p-4">
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 mb-4">
-            <Package className="w-7 h-7" />
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-            Appoio
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Recebimento de encomendas
-          </p>
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          {erro && (
-            <div className="space-y-2">
-              <p className="text-sm text-destructive text-center">{erro}</p>
-              {erro === "Usuário não encontrado." && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full rounded-full"
-                  onClick={() => setMostrarBuscaCpf(true)}
-                >
-                  <Search className="w-4 h-4 mr-2" />
-                  Tentar login com CPF?
-                </Button>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="nome">Nome</Label>
-            <Input
-              id="nome"
-              placeholder="Digite seu nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="senha">Senha</Label>
-            <div className="relative">
-              <Input
-                id="senha"
-                type={mostrarSenha ? "text" : "password"}
-                placeholder="Digite sua senha"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                className="pr-10"
-              />
+        {modoBuscaCpf ? (
+          <>
+            <div className="text-center mb-8">
               <button
                 type="button"
-                onClick={() => setMostrarSenha((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
-                aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
-                tabIndex={-1}
+                onClick={voltarLoginNormal}
+                className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-4"
               >
-                {mostrarSenha ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
+                <ArrowLeft className="w-4 h-4" />
+                Voltar
               </button>
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 mb-4">
+                <Search className="w-7 h-7" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                Buscar por CPF
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">
+                Digite seu CPF cadastrado
+              </p>
             </div>
-          </div>
 
-          <Button type="submit" className="w-full rounded-full" disabled={carregando}>
-            {carregando ? "Entrando..." : "Entrar"}
-          </Button>
+            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); buscarPorCpf(); }}>
+              {erro && <p className="text-sm text-destructive text-center">{erro}</p>}
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full rounded-full"
-            onClick={() => navigate("/cadastro")}
-          >
-            Cadastrar
-          </Button>
+              <div className="space-y-2">
+                <Label htmlFor="cpfBusca">CPF</Label>
+                <Input
+                  id="cpfBusca"
+                  placeholder="000.000.000-00"
+                  value={cpfBusca}
+                  onChange={(e) => setCpfBusca(e.target.value)}
+                  maxLength={14}
+                />
+              </div>
 
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full text-sm text-slate-500 hover:text-slate-800"
-            onClick={() => navigate("/esqueci-senha")}
-          >
-            Esqueceu sua senha?
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full rounded-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-            onClick={() => navigate("/login-entregador")}
-          >
-            Login modo entregador
-          </Button>
-        </form>
-
-        {mostrarBuscaCpf && (
-          <div className="mt-6 pt-6 border-t border-slate-200">
-            <h3 className="text-sm font-medium text-slate-900 mb-3">
-              Buscar por CPF
-            </h3>
-            <div className="space-y-2">
-              <Label htmlFor="cpfBusca">CPF cadastrado</Label>
-              <Input
-                id="cpfBusca"
-                placeholder="000.000.000-00"
-                value={cpfBusca}
-                onChange={(e) => setCpfBusca(e.target.value)}
-                maxLength={14}
-              />
-              <Button
-                type="button"
-                className="w-full rounded-full"
-                disabled={buscandoCpf}
-                onClick={buscarPorCpf}
-              >
+              <Button type="submit" className="w-full rounded-full" disabled={buscandoCpf}>
                 {buscandoCpf ? "Buscando..." : "Buscar usuário"}
               </Button>
-            </div>
-          </div>
-        )}
-
-        {usuarioEncontradoCpf && (
-          <div className="mt-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Copy className="w-4 h-4 text-indigo-600" />
-              <span className="text-sm font-medium text-indigo-800">
-                Usuário encontrado:
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-indigo-700 truncate">
-                {usuarioEncontradoCpf.nome_completo}
-              </span>
+            </form>
+          </>
+        ) : usuarioEncontradoCpf ? (
+          <>
+            <div className="text-center mb-8">
               <button
                 type="button"
-                onClick={copiarNome}
-                className="p-1.5 text-indigo-600 hover:text-indigo-800 transition-colors"
-                title="Copiar nome"
+                onClick={voltarLoginNormal}
+                className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-4"
               >
-                <Copy className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4" />
+                Voltar
               </button>
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 mb-4">
+                <Package className="w-7 h-7" />
+              </div>
+              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+                Appoio
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">
+                Recebimento de encomendas
+              </p>
             </div>
-            <p className="text-xs text-indigo-600 mt-2">
-              Nome copiado para o campo acima. Agora digite sua senha e entre.
-            </p>
-          </div>
+
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <div className="bg-indigo-50 rounded-xl border border-indigo-100 p-4 mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Copy className="w-4 h-4 text-indigo-600" />
+                  <span className="text-sm font-medium text-indigo-800">
+                    Usuário encontrado:
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-indigo-700 truncate">
+                    {usuarioEncontradoCpf.nome_completo}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={copiarNome}
+                    className="p-1.5 text-indigo-600 hover:text-indigo-800 transition-colors"
+                    title="Copiar nome"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-xs text-indigo-600 mt-2">
+                  Nome copiado para o campo acima. Agora digite sua senha e entre.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nome">Nome</Label>
+                <Input
+                  id="nome"
+                  placeholder="Digite seu nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="senha">Senha</Label>
+                <div className="relative">
+                  <Input
+                    id="senha"
+                    type={mostrarSenha ? "text" : "password"}
+                    placeholder="Digite sua senha"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSenha((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
+                    aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                    tabIndex={-1}
+                  >
+                    {mostrarSenha ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full rounded-full" disabled={carregando}>
+                {carregando ? "Entrando..." : "Entrar"}
+              </Button>
+            </form>
+          </>
+        ) : (
+          <>
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 mb-4">
+                <Package className="w-7 h-7" />
+              </div>
+              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+                Appoio
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">
+                Recebimento de encomendas
+              </p>
+            </div>
+
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              {erro && (
+                <div className="space-y-2">
+                  <p className="text-sm text-destructive text-center">{erro}</p>
+                  {erro === "Usuário não encontrado." && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full rounded-full"
+                      onClick={() => setModoBuscaCpf(true)}
+                    >
+                      <Search className="w-4 h-4 mr-2" />
+                      Tentar login com CPF?
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="nome">Nome</Label>
+                <Input
+                  id="nome"
+                  placeholder="Digite seu nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="senha">Senha</Label>
+                <div className="relative">
+                  <Input
+                    id="senha"
+                    type={mostrarSenha ? "text" : "password"}
+                    placeholder="Digite sua senha"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSenha((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
+                    aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                    tabIndex={-1}
+                  >
+                    {mostrarSenha ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full rounded-full" disabled={carregando}>
+                {carregando ? "Entrando..." : "Entrar"}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full rounded-full"
+                onClick={() => navigate("/cadastro")}
+              >
+                Cadastrar
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full text-sm text-slate-500 hover:text-slate-800"
+                onClick={() => navigate("/esqueci-senha")}
+              >
+                Esqueceu sua senha?
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full rounded-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                onClick={() => navigate("/login-entregador")}
+              >
+                Login modo entregador
+              </Button>
+            </form>
+          </>
         )}
       </div>
     </div>
