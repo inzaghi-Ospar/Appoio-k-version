@@ -121,39 +121,37 @@ const Cadastro = () => {
     setCarregando(true);
 
     try {
-      const digitosCpf = cpf.replace(/\D/g, "");
-      
-            const { data: cpfExistente, error: erroConsultaCpf } = await supabase
-              .from("cadastros")
-              .select("id")
-              .eq("cpf", digitosCpf)
-              .maybeSingle();
-      
-            if (erroConsultaCpf) {
-              setErroGeral("Erro ao verificar cadastro. Tente novamente.");
-              return;
-            }
-      
-            const { data: nomeExistente, error: erroConsultaNome } = await supabase
-              .from("cadastros")
-              .select("id")
-              .ilike("nome_completo", nomeCompleto.trim())
-              .maybeSingle();
-      
-            if (erroConsultaNome) {
-              setErroGeral("Erro ao verificar cadastro. Tente novamente.");
-              return;
-            }
-      
-            if (cpfExistente) {
-              setErroCpf("Já existe um cadastro com este CPF.");
-            }
-            if (nomeExistente) {
-              setErroNome("Já existe um cadastro com este nome.");
-            }
-            if (cpfExistente || nomeExistente) {
-              return;
-            }
+      const { data: cpfExistente, error: erroConsultaCpf } = await supabase
+        .from("cadastros")
+        .select("id")
+        .eq("cpf", digitosCpf)
+        .maybeSingle();
+
+      if (erroConsultaCpf) {
+        setErroGeral("Erro ao verificar cadastro. Tente novamente.");
+        return;
+      }
+
+      const { data: nomeExistente, error: erroConsultaNome } = await supabase
+        .from("cadastros")
+        .select("id")
+        .ilike("nome_completo", nomeCompleto.trim())
+        .maybeSingle();
+
+      if (erroConsultaNome) {
+        setErroGeral("Erro ao verificar cadastro. Tente novamente.");
+        return;
+      }
+
+      if (cpfExistente) {
+        setErroCpf("Já existe um cadastro com este CPF.");
+      }
+      if (nomeExistente) {
+        setErroNome("Já existe um cadastro com este nome.");
+      }
+      if (cpfExistente || nomeExistente) {
+        return;
+      }
 
       const { error: erroInsercao } = await supabase.from("cadastros").insert({
         nome_completo: nomeCompleto.trim(),
