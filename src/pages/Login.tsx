@@ -36,10 +36,16 @@ const Login = () => {
         .from("cadastros")
         .select("nome_completo")
         .ilike("nome_completo", nome.trim())
-        .eq("senha", senha)
+        .eq("senha", senha.trim())
         .maybeSingle();
 
-      if (error || !data) {
+      if (error) {
+        console.error("Erro Supabase login:", error);
+        setErro("Erro ao fazer login. Tente novamente.");
+        return;
+      }
+
+      if (!data) {
         setErro("Nome ou senha incorretos.");
         return;
       }
