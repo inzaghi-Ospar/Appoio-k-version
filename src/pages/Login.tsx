@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Eye, EyeOff } from "lucide-react";
+import { Package, Eye, EyeOff, Copy, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,10 @@ const Login = () => {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarBuscaCpf, setMostrarBuscaCpf] = useState(false);
+  const [cpfBusca, setCpfBusca] = useState("");
+  const [usuarioEncontradoCpf, setUsuarioEncontradoCpf] = useState<{ nome_completo: string; senha: string } | null>(null);
+  const [buscandoCpf, setBuscandoCpf] = useState(false);
 
   useEffect(() => {
     window.history.pushState({ appoio: true }, "", window.location.href);
@@ -32,6 +36,52 @@ const Login = () => {
       navigate("/tela-inicial");
     }
   }, [navigate]);
+
+  const copiarNome = () => {
+    if (usuarioEncontradoCpf) {
+      navigator.clipboard.writeText(usuarioEncontradoCpf.nome_completo);
+      setNome(usuarioEncontradoCpf.nome_completo);
+      setMostrarBuscaCpf(false);
+      setUsuarioEncontradoCpf(null);
+      setCpfBusca("");
+    }
+  };
+
+  const buscarPorCpf = async () => {
+    const digitosCpf = cpfBusca.replace(/\D/g, "");
+    if (!digitosCpf || digitosCpf.length !== 11) {
+      setErro("CPF inválido. Digite um CPF com 11 dígitos.");
+      return;
+    }
+
+    setBuscandoCpf(true);
+    setErro("");
+
+    try {
+      const { data: usuario, error } = await supabase
+        .from("cadastros")
+        .select("nome_completo, senha")
+        .eq("cpf", digitosCpf)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Erro Supabase busca CPF:", error);
+        setErro("Erro ao buscar por CPF. Tente novamente.");
+        return;
+      }
+
+      if (!usuario) {
+        setErro("Nenhum usuário encontrado com este CPF.");
+        return;
+      }
+
+      setUsuarioEncontradoCpf(usuario);
+    } catch {
+      setErro("Erro de conexão. Verifique sua internet e tente novamente.");
+    } finally {
+      setBuscandoCpf(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +139,22 @@ const Login = () => {
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          {erro && <p className="text-sm text-destructive text-center">{erro}</p>}
+          {erro && (
+            <div className="space-y-2">
+              <p className="text-sm text-destructive text-center">{erro}</p>
+              {erro === "Usuário não encontrado." && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full rounded-full"
+                  onClick={() => setMostrarBuscaCpf(true)}
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  Tentar login com CPF?
+                </Button>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="nome">Nome</Label>
@@ -142,23 +207,76 @@ const Login = () => {
           </Button>
 
           <Button
-                      type="button"
-                      variant="ghost"
-                      className="w-full text-sm text-slate-500 hover:text-slate-800"
-                      onClick={() => navigate("/esqueci-senha")}
-                    >
-                      Esqueceu sua senha?
-                    </Button>
-          
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full rounded-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-                      onClick={() => navigate("/login-entregador")}
-                    >
-                      Login modo entregador
-                    </Button>
-                  </form>
+            type="button"
+            variant="ghost"
+            className="w-full text-sm text-slate-500 hover:text-slate-800"
+            onClick={() => navigate("/esqueci-senha")}
+          >
+            Esqueceu sua senha?
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full rounded-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+            onClick={() => navigate("/login-entregador")}
+          >
+            Login modo entregador
+          </Button>
+        </form>
+
+        {mostrarBuscaCpf && (
+          <div className="mt-6 pt-6 border-t border-slate-200">
+            <h3 className="text-sm font-medium text-slate-900 mb-3">
+              Buscar por CPF
+            </h3>
+            <div className="space-y-2">
+              <Label htmlFor="cpfBusca">CPF cadastrado</Label>
+              <Input
+                id="cpfBusca"
+                placeholder="000.000.000-00"
+                value={cpfBusca}
+                onChange={(e) => setCpfBusca(e.target.value)}
+                maxLength={14}
+              />
+              <Button
+                type="button"
+                className="w-full rounded-full"
+                disabled={buscandoCpf}
+                onClick={buscarPorCpf}
+              >
+                {buscandoCpf ? "Buscando..." : "Buscar usuário"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {usuarioEncontradoCpf && (
+          <div className="mt-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Copy className="w-4 h-4 text-indigo-600" />
+              <span className="text-sm font-medium text-indigo-800">
+                Usuário encontrado:
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-indigo-700 truncate">
+                {usuarioEncontradoCpf.nome_completo}
+              </span>
+              <button
+                type="button"
+                onClick={copiarNome}
+                className="p-1.5 text-indigo-600 hover:text-indigo-800 transition-colors"
+                title="Copiar nome"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-indigo-600 mt-2">
+              Nome copiado para o campo acima. Agora digite sua senha e entre.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
