@@ -26,6 +26,13 @@ const Login = () => {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
+  useEffect(() => {
+    const usuarioSalvo = localStorage.getItem("usuario_nome");
+    if (usuarioSalvo) {
+      navigate("/tela-inicial");
+    }
+  }, [navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro("");
