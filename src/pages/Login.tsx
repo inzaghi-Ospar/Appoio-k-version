@@ -109,6 +109,7 @@ const Login = () => {
         return;
       }
 
+      setModoBuscaCpf(false);
       setUsuarioEncontradoCpf(usuario);
     } catch {
       setErro("Erro de conexão. Verifique sua internet e tente novamente.");
