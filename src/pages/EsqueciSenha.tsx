@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +52,7 @@ const EsqueciSenha = () => {
   const [erroGeral, setErroGeral] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [verificado, setVerificado] = useState(false);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   const handleVerificar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,8 +158,7 @@ const EsqueciSenha = () => {
           onClick={() => navigate("/login")}
           className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-6"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar
+          <ArrowLeft className="w-4 h-4" /> Voltar
         </button>
 
         <div className="text-center mb-8">
@@ -222,18 +222,33 @@ const EsqueciSenha = () => {
             )}
             <div className="space-y-2">
               <Label htmlFor="novaSenha">Nova senha</Label>
-              <Input
-                id="novaSenha"
-                type="password"
-                placeholder="Digite sua nova senha"
-                value={novaSenha}
-                onChange={(e) => {
-                  setNovaSenha(e.target.value);
-                  setErroSenha("");
-                }}
-                className={erroSenha ? "border-destructive" : ""}
-              />
-              {erroSenha && <p className="text-sm text-destructive">{erroSenha}</p>}
+              <div className="relative">
+                <Input
+                  id="novaSenha"
+                  type={mostrarSenha ? "text" : "password"}
+                  placeholder="Digite sua nova senha"
+                  value={novaSenha}
+                  onChange={(e) => {
+                    setNovaSenha(e.target.value);
+                    setErroSenha("");
+                  }}
+                  className={erroSenha ? "border-destructive pr-10" : "pr-10"}
+                />
+                {erroSenha && (
+                  <p className="text-sm text-destructive">{erroSenha}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha(!mostrarSenha)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 transition-colors p-1"
+                >
+                  {mostrarSenha ? (
+                    <Eye className="w-4 h-4" />
+                  ) : (
+                    <EyeOff className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2">
