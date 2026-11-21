@@ -58,8 +58,9 @@ const Login = () => {
 
       localStorage.setItem("usuario_nome", usuario.nome_completo);
       navigate("/tela-inicial");
-    } catch {
-      setErro("Erro ao fazer login. Tente novamente.");
+    } catch (err) {
+      console.error("Erro de conexão login:", err);
+      setErro("Houve um erro de conexão. Verifique sua internet e tente novamente.");
     } finally {
       setCarregando(false);
     }
