@@ -154,17 +154,18 @@ const Cadastro = () => {
       }
 
       const { error: erroInsercao } = await supabase.from("cadastros").insert({
-        nome_completo: nomeCompleto.trim(),
-        telefone: telefone.replace(/\D/g, ""),
-        cpf: cpf.replace(/\D/g, ""),
-        senha,
-        tipo_usuario: tipoUsuarioSelecionado,
-      });
-
-      if (erroInsercao) {
-        setErroGeral("Erro ao criar cadastro. Tente novamente.");
-        return;
-      }
+              nome_completo: nomeCompleto.trim(),
+              telefone: telefone.replace(/\D/g, ""),
+              cpf: cpf.replace(/\D/g, ""),
+              senha,
+              tipo_usuario: tipoUsuarioSelecionado,
+            });
+      
+            if (erroInsercao) {
+              console.error("Erro Supabase:", erroInsercao);
+              setErroGeral(`Erro: ${erroInsercao.message || "Erro ao criar cadastro"}`);
+              return;
+            }
 
       navigate("/login");
     } catch {
