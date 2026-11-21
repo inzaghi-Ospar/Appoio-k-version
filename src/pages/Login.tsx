@@ -6,6 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
+const formatarCpf = (valor: string) => {
+  const digitos = valor.replace(/\D/g, "").slice(0, 11);
+  if (!digitos) return "";
+  if (digitos.length <= 3) return digitos;
+  if (digitos.length <= 6) return `${digitos.slice(0, 3)}.${digitos.slice(3)}`;
+  if (digitos.length <= 9) return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6)}`;
+  return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-${digitos.slice(9)}`;
+};
+
 const Login = () => {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
@@ -164,7 +173,7 @@ const Login = () => {
                   id="cpfBusca"
                   placeholder="000.000.000-00"
                   value={cpfBusca}
-                  onChange={(e) => setCpfBusca(e.target.value)}
+                  onChange={(e) => setCpfBusca(formatarCpf(e.target.value))}
                   maxLength={14}
                 />
               </div>
