@@ -74,11 +74,29 @@ const Login = () => {
     setErro("");
 
     try {
-      const { data: usuario, error } = await supabase
+      console.log("Buscando CPF:", digitosCpf);
+
+      // Tenta buscar com CPF sem formatação (apenas dígitos)
+      let { data: usuario, error } = await supabase
         .from("cadastros")
-        .select("nome_completo, senha")
+        .select("nome_completo, senha, cpf")
         .eq("cpf", digitosCpf)
         .maybeSingle();
+
+      // Se não encontrou, tenta com CPF formatado (caso cadastro antigo tenha salvo com pontos)
+      if (!usuario && !error) {
+        const cpfFormatado = formatarCpf(digitosCpf);
+        console.log("Tentando CPF formatado:", cpfFormatado);
+        const resultado = await supabase
+          .from("cadastros")
+          .select("nome_completo, senha, cpf")
+          .eq("cpf", cpfFormatado)
+          .maybeSingle();
+        usuario = resultado.data;
+        error = resultado.error;
+      }
+
+      console.log("Resultado busca CPF:", { usuario, error });
 
       if (error) {
         console.error("Erro Supabase busca CPF:", error);
