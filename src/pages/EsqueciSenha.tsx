@@ -82,7 +82,7 @@ const EsqueciSenha = () => {
       const { data: registro, error } = await supabase
         .from("cadastros")
         .select("id, nome_completo, cpf")
-        .eq("cpf", cpf)
+        .eq("cpf", digitosCpf)
         .ilike("nome_completo", nome.trim())
         .maybeSingle();
 
@@ -106,6 +106,8 @@ const EsqueciSenha = () => {
 
   const handleRedefinir = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const digitosCpf = cpf.replace(/\D/g, "");
 
     let temErro = false;
 
@@ -132,7 +134,7 @@ const EsqueciSenha = () => {
       const { error } = await supabase
         .from("cadastros")
         .update({ senha: novaSenha })
-        .eq("cpf", cpf);
+        .eq("cpf", digitosCpf);
 
       if (error) {
         setErroGeral("Erro ao atualizar senha. Tente novamente.");
