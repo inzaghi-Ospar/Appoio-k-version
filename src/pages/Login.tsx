@@ -47,6 +47,7 @@ const Login = () => {
 
       if (!data) {
         console.log("Login falhou - nome:", nome.trim(), "senha:", senha.trim());
+        console.log("Nome no banco pode ter formatação diferente. Verifique no Supabase.");
         setErro("Nome ou senha incorretos.");
         return;
       }
