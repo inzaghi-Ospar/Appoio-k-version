@@ -32,28 +32,32 @@ const Login = () => {
     setCarregando(true);
 
     try {
-      const { data, error } = await supabase
+      // 1. Verificar se o usuário existe pelo nome
+      const { data: usuario, error: erroUsuario } = await supabase
         .from("cadastros")
-        .select("nome_completo")
+        .select("nome_completo, senha")
         .ilike("nome_completo", nome.trim())
-        .eq("senha", senha.trim())
         .maybeSingle();
 
-      if (error) {
-        console.error("Erro Supabase login:", error);
+      if (erroUsuario) {
+        console.error("Erro Supabase login:", erroUsuario);
         setErro("Erro ao fazer login. Tente novamente.");
         return;
       }
 
-      if (!data) {
-        console.log("Login falhou - nome:", nome.trim(), "senha:", senha.trim());
-        console.log("Nome no banco pode ter formatação diferente. Verifique no Supabase.");
-        setErro("Nome ou senha incorretos.");
+      if (!usuario) {
+        setErro("Usuário não encontrado.");
         return;
       }
 
-      localStorage.setItem("usuario_nome", data.nome_completo);
-            navigate("/tela-inicial");
+      // 2. Verificar se a senha está correta
+      if (usuario.senha !== senha.trim()) {
+        setErro("Senha incorreta.");
+        return;
+      }
+
+      localStorage.setItem("usuario_nome", usuario.nome_completo);
+      navigate("/tela-inicial");
     } catch {
       setErro("Erro ao fazer login. Tente novamente.");
     } finally {
