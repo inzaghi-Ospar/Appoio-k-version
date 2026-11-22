@@ -1,4 +1,5 @@
-import { useEffect, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowRight, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
