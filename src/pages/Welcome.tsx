@@ -1,9 +1,16 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useNavigate } from "react-router-dom";
 import { ArrowRight, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Welcome = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const entregadorSalvo = localStorage.getItem("entregador_nome");
+    if (entregadorSalvo) {
+      navigate("/tela-entregas");
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-between bg-[#F4F1EC] p-6">

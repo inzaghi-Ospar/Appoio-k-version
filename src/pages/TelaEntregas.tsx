@@ -138,18 +138,18 @@ const TelaEntregas = () => {
     }
 
     try {
-      const registros = nomesSelecionados.map((nomeDestinatario) => ({
-        nome_destinatario: nomeDestinatario,
-        nome_entregador: nome,
-        status: "pronta",
-        created_at: new Date().toISOString(),
-      }));
+      for (const nomeDestinatario of nomesSelecionados) {
+        const { error } = await supabase.from("encomendas").insert({
+          nome_destinatario: nomeDestinatario,
+          nome_entregador: nome,
+          status: "pronta",
+          created_at: new Date().toISOString(),
+        });
 
-      const { error } = await supabase.from("encomendas").insert(registros);
-
-      if (error) {
-        alert("Erro ao adicionar encomendas. Tente novamente.");
-        return;
+        if (error) {
+          alert(`Erro ao adicionar encomenda para ${nomeDestinatario}. Tente novamente.`);
+          return;
+        }
       }
 
       setMostrarModalAdicionar(false);
