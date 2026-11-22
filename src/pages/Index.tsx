@@ -9,22 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Index = () => {
   const navigate = useNavigate();
   const [usuarioNome, setUsuarioNome] = useState("");
-  const [encomendas, setEncomendas] = useState<any[]>([
-          {
-            id: "1",
-            nome_entregador: "Carlos Pereira",
-            nome_destinatario: "João Silva Santos",
-            created_at: new Date().toISOString(),
-            status: "pronta"
-          },
-          {
-            id: "2",
-            nome_entregador: "Ana Souza",
-            nome_destinatario: "Maria Oliveira Costa",
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-            status: "pronta"
-          }
-        ]);
+  const [encomendas, setEncomendas] = useState<any[]>([]);
     const [confirmadas, setConfirmadas] = useState<Set<string>>(new Set());
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -57,14 +42,13 @@ const Index = () => {
           .order("created_at", { ascending: false });
 
         if (error) {
-          // Mantém os dados de exemplo em caso de erro
-          return;
-        }
-
-        // Se houver dados reais, usa eles; senão mantém os exemplos
-        if (data && data.length > 0) {
-          setEncomendas(data);
-        }
+                  setErro("Erro ao carregar encomendas. Tente novamente.");
+                  return;
+                }
+        
+                if (data) {
+                  setEncomendas(data);
+                }
       } catch {
         setErro("Erro ao carregar encomendas. Tente novamente.");
       } finally {
