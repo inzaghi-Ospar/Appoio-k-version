@@ -74,19 +74,14 @@ const Login = () => {
     setErro("");
 
     try {
-      console.log("Buscando CPF:", digitosCpf);
-
-      // Tenta buscar com CPF sem formatação (apenas dígitos)
       let { data: usuario, error } = await supabase
         .from("cadastros")
         .select("nome_completo, senha, cpf")
         .eq("cpf", digitosCpf)
         .maybeSingle();
 
-      // Se não encontrou, tenta com CPF formatado (caso cadastro antigo tenha salvo com pontos)
       if (!usuario && !error) {
         const cpfFormatado = formatarCpf(digitosCpf);
-        console.log("Tentando CPF formatado:", cpfFormatado);
         const resultado = await supabase
           .from("cadastros")
           .select("nome_completo, senha, cpf")
@@ -96,10 +91,7 @@ const Login = () => {
         error = resultado.error;
       }
 
-      console.log("Resultado busca CPF:", { usuario, error });
-
       if (error) {
-        console.error("Erro Supabase busca CPF:", error);
         setErro("Erro ao buscar por CPF. Tente novamente.");
         return;
       }
@@ -124,7 +116,6 @@ const Login = () => {
     setCarregando(true);
 
     try {
-      // 1. Verificar se o usuário existe pelo nome
       const { data: usuario, error: erroUsuario } = await supabase
         .from("cadastros")
         .select("nome_completo, senha")
@@ -132,7 +123,6 @@ const Login = () => {
         .maybeSingle();
 
       if (erroUsuario) {
-        console.error("Erro Supabase login:", erroUsuario);
         setErro("Erro ao fazer login. Tente novamente.");
         return;
       }
@@ -142,7 +132,6 @@ const Login = () => {
         return;
       }
 
-      // 2. Verificar se a senha está correta
       if (usuario.senha !== senha.trim()) {
         setErro("Senha incorreta.");
         return;
@@ -150,8 +139,7 @@ const Login = () => {
 
       localStorage.setItem("usuario_nome", usuario.nome_completo);
       navigate("/tela-inicial");
-    } catch (err) {
-      console.error("Erro de conexão login:", err);
+    } catch {
       setErro("Houve um erro de conexão. Verifique sua internet e tente novamente.");
     } finally {
       setCarregando(false);
@@ -160,22 +148,22 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F4F1EC] p-4">
-      <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-8">
+      <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-6">
         {modoBuscaCpf ? (
           <>
-            <div className="text-center mb-8">
+            <div className="text-center mb-5">
               <button
                 type="button"
                 onClick={voltarLoginNormal}
-                className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-4"
+                className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-3"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Voltar
               </button>
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 mb-4">
-                <Search className="w-7 h-7" />
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-3">
+                <Search className="w-6 h-6" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
                 Buscar por CPF
               </h1>
               <p className="text-sm text-slate-500 mt-1">
@@ -183,10 +171,10 @@ const Login = () => {
               </p>
             </div>
 
-            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); buscarPorCpf(); }}>
+            <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); buscarPorCpf(); }}>
               {erro && <p className="text-sm text-destructive text-center">{erro}</p>}
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="cpfBusca">CPF</Label>
                 <Input
                   id="cpfBusca"
@@ -204,19 +192,19 @@ const Login = () => {
           </>
         ) : usuarioEncontradoCpf ? (
           <>
-            <div className="text-center mb-8">
+            <div className="text-center mb-5">
               <button
                 type="button"
                 onClick={voltarLoginNormal}
-                className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-4"
+                className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-3"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Voltar
               </button>
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 mb-4">
-                <Package className="w-7 h-7" />
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-3">
+                <Package className="w-6 h-6" />
               </div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                 Appoio
               </h1>
               <p className="text-sm text-slate-500 mt-1">
@@ -224,9 +212,9 @@ const Login = () => {
               </p>
             </div>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="bg-indigo-50 rounded-xl border border-indigo-100 p-4 mb-4">
-                <div className="flex items-center gap-2 mb-2">
+            <form className="space-y-3" onSubmit={handleSubmit}>
+              <div className="bg-indigo-50 rounded-xl border border-indigo-100 p-3">
+                <div className="flex items-center gap-2 mb-1">
                   <Copy className="w-4 h-4 text-indigo-600" />
                   <span className="text-sm font-medium text-indigo-800">
                     Usuário encontrado:
@@ -245,12 +233,9 @@ const Login = () => {
                     <Copy className="w-4 h-4" />
                   </button>
                 </div>
-                <p className="text-xs text-indigo-600 mt-2">
-                  Nome copiado para o campo acima. Agora digite sua senha e entre.
-                </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="nome">Nome</Label>
                 <Input
                   id="nome"
@@ -260,7 +245,7 @@ const Login = () => {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="senha">Senha</Label>
                 <div className="relative">
                   <Input
@@ -294,11 +279,11 @@ const Login = () => {
           </>
         ) : (
           <>
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 mb-4">
-                <Package className="w-7 h-7" />
+            <div className="text-center mb-5">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-3">
+                <Package className="w-6 h-6" />
               </div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                 Appoio
               </h1>
               <p className="text-sm text-slate-500 mt-1">
@@ -306,7 +291,7 @@ const Login = () => {
               </p>
             </div>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-3" onSubmit={handleSubmit}>
               {erro && (
                 <div className="space-y-2">
                   <p className="text-sm text-destructive text-center">{erro}</p>
@@ -324,7 +309,7 @@ const Login = () => {
                 </div>
               )}
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="nome">Nome</Label>
                 <Input
                   id="nome"
@@ -334,7 +319,7 @@ const Login = () => {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="senha">Senha</Label>
                 <div className="relative">
                   <Input
@@ -365,14 +350,24 @@ const Login = () => {
                 {carregando ? "Entrando..." : "Entrar"}
               </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full rounded-full"
-                onClick={() => navigate("/cadastro")}
-              >
-                Cadastrar
-              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => navigate("/cadastro")}
+                >
+                  Cadastrar
+                </Button>
+                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="rounded-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                                  onClick={() => navigate("/login-entregador")}
+                                >
+                                  Login Entregador
+                                </Button>
+              </div>
 
               <Button
                 type="button"
@@ -381,15 +376,6 @@ const Login = () => {
                 onClick={() => navigate("/esqueci-senha")}
               >
                 Esqueceu sua senha?
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full rounded-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-                onClick={() => navigate("/login-entregador")}
-              >
-                Login modo entregador
               </Button>
             </form>
           </>
