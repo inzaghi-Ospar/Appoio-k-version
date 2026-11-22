@@ -132,34 +132,36 @@ const TelaEntregas = () => {
   };
 
   const confirmarAdicao = async () => {
-    if (nomesSelecionados.length === 0) {
-      alert("Adicione pelo menos um nome antes de confirmar.");
-      return;
-    }
-
-    try {
-      for (const nomeDestinatario of nomesSelecionados) {
-        const { error } = await supabase.from("encomendas").insert({
-          nome_destinatario: nomeDestinatario,
-          nome_entregador: nome,
-          status: "pronta",
-        });
-
-        if (error) {
-          alert(`Erro ao adicionar encomenda para ${nomeDestinatario}. Tente novamente.`);
-          return;
-        }
+      if (nomesSelecionados.length === 0) {
+        alert("Adicione pelo menos um nome antes de confirmar.");
+        return;
       }
-
-      setMostrarModalAdicionar(false);
-      setNomesSelecionados([]);
-      setNomeBusca("");
-      setResultadosBusca([]);
-      carregarDados();
-    } catch {
-      alert("Erro de conexão. Verifique sua internet e tente novamente.");
-    }
-  };
+  
+      try {
+        for (const nomeDestinatario of nomesSelecionados) {
+          const { error } = await supabase.from("encomendas").insert({
+            nome_destinatario: nomeDestinatario,
+            nome_entregador: nome,
+            status: "pronta",
+          });
+  
+          if (error) {
+            console.error("Erro detalhado:", error);
+            alert(`Erro ao adicionar encomenda para ${nomeDestinatario}: ${error.message || "Erro desconhecido"}`);
+            return;
+          }
+        }
+  
+        setMostrarModalAdicionar(false);
+        setNomesSelecionados([]);
+        setNomeBusca("");
+        setResultadosBusca([]);
+        carregarDados();
+      } catch (err: any) {
+        console.error("Erro catch:", err);
+        alert(`Erro de conexão: ${err?.message || "Verifique sua internet e tente novamente."}`);
+      }
+    };
 
   const confirmarEntrega = async (id: string) => {
     try {
