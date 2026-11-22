@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import ReportarProblema from "@/components/ReportarProblema";
 
 type Aba = "inicio" | "encomendas" | "perfil";
 
@@ -308,6 +309,10 @@ const Index = () => {
                 <p className="text-xs text-slate-400">
                   Usuário de teste para demonstração
                 </p>
+                <ReportarProblema
+                  usuarioNome={usuarioNome || "Visitante"}
+                  usuarioTipo="cliente"
+                />
               </div>
             </div>
           )}

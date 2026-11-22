@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import ReportarProblema from "@/components/ReportarProblema";
 
 type Aba = "pendentes" | "historico" | "perfil";
 
@@ -373,14 +374,18 @@ const TelaEntregas = () => {
                   </label>
                 </div>
                 <p className="text-sm text-slate-500 mt-3">
-                  {nome || "Entregador"}
-                </p>
-                <p className="text-xs text-slate-400">
-                  Entregador
-                </p>
-              </div>
-            </div>
-          )}
+                                  {nome || "Entregador"}
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                  Entregador
+                                </p>
+                                <ReportarProblema
+                                  usuarioNome={nome || "Entregador"}
+                                  usuarioTipo="entregador"
+                                />
+                              </div>
+                            </div>
+                          )}
         </div>
       </div>
 
