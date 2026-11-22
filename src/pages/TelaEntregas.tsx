@@ -143,7 +143,6 @@ const TelaEntregas = () => {
           nome_destinatario: nomeDestinatario,
           nome_entregador: nome,
           status: "pronta",
-          created_at: new Date().toISOString(),
         });
 
         if (error) {
