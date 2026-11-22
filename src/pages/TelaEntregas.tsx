@@ -30,47 +30,55 @@ const TelaEntregas = () => {
     const nomeSalvo = localStorage.getItem("entregador_nome");
     if (nomeSalvo) {
       setNome(nomeSalvo);
-      carregarDados(nomeSalvo);
+      carregarDados();
     } else {
       navigate("/login-entregador");
     }
   }, [navigate]);
 
-  const carregarDados = async (entregadorNome: string) => {
-        setCarregando(true);
-        setErro("");
-    
-        try {
-          const { data: pendentesData, error: erroPendentes } = await supabase
-            .from("encomendas")
-            .select("*")
-            .eq("status", "pronta")
-            .order("created_at", { ascending: false });
-    
-          if (erroPendentes) {
-            setErro("Erro ao carregar encomendas. Tente novamente.");
-            return;
-          }
-    
-          const { data: historicoData, error: erroHistorico } = await supabase
-            .from("encomendas")
-            .select("*")
-            .eq("status", "retirada")
-            .order("retirado_em", { ascending: false });
-    
-          if (erroHistorico) {
-            setErro("Erro ao carregar histórico. Tente novamente.");
-            return;
-          }
-    
-          setPendentes(pendentesData || []);
-          setHistorico(historicoData || []);
-        } catch {
-          setErro("Erro de conexão. Verifique sua internet e tente novamente.");
-        } finally {
-          setCarregando(false);
-        }
-      };
+  const carregarPendentes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("encomendas")
+        .select("*")
+        .eq("status", "pronta")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        setErro("Erro ao carregar encomendas. Tente novamente.");
+        return;
+      }
+
+      setPendentes(data || []);
+    } catch {
+      setErro("Erro de conexão. Verifique sua internet e tente novamente.");
+    }
+  };
+
+  const carregarHistorico = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("encomendas")
+        .select("*")
+        .eq("status", "retirada")
+        .order("retirado_em", { ascending: false });
+
+      if (error) return;
+      if (data) setHistorico(data);
+    } catch {
+      // mantém o histórico vazio se falhar
+    }
+  };
+
+  const carregarDados = async () => {
+    setCarregando(true);
+    setErro("");
+
+    await carregarPendentes();
+    await carregarHistorico();
+
+    setCarregando(false);
+  };
 
   const confirmarEntrega = async (id: string) => {
       try {
@@ -85,7 +93,7 @@ const TelaEntregas = () => {
         }
   
         setPendentes(pendentes.filter((e) => e.id !== id));
-        if (nome) carregarDados(nome);
+                if (nome) carregarDados();
       } catch {
         alert("Erro de conexão. Verifique sua internet e tente novamente.");
       }
