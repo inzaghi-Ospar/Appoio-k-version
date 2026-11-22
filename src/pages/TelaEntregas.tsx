@@ -6,11 +6,13 @@ import {
   PackageCheck,
   User,
   CheckCircle2,
-  Clock,
   Camera,
   Plus,
+  Search,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 
 type Aba = "pendentes" | "historico" | "perfil";
@@ -25,6 +27,11 @@ const TelaEntregas = () => {
   const [erro, setErro] = useState("");
   const [mostrarConfirmacaoLogout, setMostrarConfirmacaoLogout] = useState(false);
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
+  const [mostrarModalAdicionar, setMostrarModalAdicionar] = useState(false);
+  const [nomeBusca, setNomeBusca] = useState("");
+  const [resultadosBusca, setResultadosBusca] = useState<any[]>([]);
+  const [buscando, setBuscando] = useState(false);
+  const [encomendaSelecionada, setEncomendaSelecionada] = useState<any>(null);
 
   useEffect(() => {
     const nomeSalvo = localStorage.getItem("entregador_nome");
@@ -78,6 +85,76 @@ const TelaEntregas = () => {
     await carregarHistorico();
 
     setCarregando(false);
+  };
+
+  const buscarNomesCadastro = async (e: ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value;
+    setNomeBusca(valor);
+
+    if (!valor || valor.length < 2) {
+      setResultadosBusca([]);
+      setEncomendaSelecionada(null);
+      return;
+    }
+
+    setBuscando(true);
+    try {
+      const { data, error } = await supabase
+        .from("cadastros")
+        .select("nome_completo")
+        .ilike("nome_completo", `%${valor}%`)
+        .limit(10);
+
+      if (error) {
+        setResultadosBusca([]);
+        return;
+      }
+
+      setResultadosBusca(data || []);
+    } catch {
+      setResultadosBusca([]);
+    } finally {
+      setBuscando(false);
+    }
+  };
+
+  const selecionarNome = (nomeCompleto: string) => {
+    setNomeBusca(nomeCompleto);
+    setResultadosBusca([]);
+    setEncomendaSelecionada({ nome_completo: nomeCompleto });
+  };
+
+  const adicionarEncomenda = async () => {
+    if (!nomeBusca.trim()) {
+      alert("Digite o nome do destinatário.");
+      return;
+    }
+
+    const nomeDestinatario = encomendaSelecionada
+      ? encomendaSelecionada.nome_completo
+      : nomeBusca.trim();
+
+    try {
+      const { error } = await supabase.from("encomendas").insert({
+        nome_destinatario: nomeDestinatario,
+        nome_entregador: nome,
+        status: "pronta",
+        created_at: new Date().toISOString(),
+      });
+
+      if (error) {
+        alert("Erro ao adicionar encomenda. Tente novamente.");
+        return;
+      }
+
+      setMostrarModalAdicionar(false);
+      setNomeBusca("");
+      setResultadosBusca([]);
+      setEncomendaSelecionada(null);
+      carregarDados();
+    } catch {
+      alert("Erro de conexão. Verifique sua internet e tente novamente.");
+    }
   };
 
   const confirmarEntrega = async (id: string) => {
@@ -143,21 +220,18 @@ const TelaEntregas = () => {
           {abaAtiva === "pendentes" && (
             <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Encomendas pendentes
-                </h2>
-                <Button
-                  onClick={() => {
-                    // TODO: configurar fluxo de adicionar entrega
-                    alert("Funcionalidade de adicionar entrega será configurada em breve.");
-                  }}
-                  className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                  size="sm"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Adicionar
-                </Button>
-              </div>
+                              <h2 className="text-lg font-semibold text-slate-900">
+                                Encomendas pendentes
+                              </h2>
+                              <Button
+                                onClick={() => setMostrarModalAdicionar(true)}
+                                className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                                size="sm"
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Adicionar
+                              </Button>
+                            </div>
 
               {carregando ? (
                 <div className="flex items-center justify-center py-12">
@@ -331,6 +405,127 @@ const TelaEntregas = () => {
           </button>
         </div>
       </div>
+
+      {mostrarModalAdicionar && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => {
+            setMostrarModalAdicionar(false);
+            setNomeBusca("");
+            setResultadosBusca([]);
+            setEncomendaSelecionada(null);
+          }}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-xl p-6 w-full max-w-sm mx-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900">
+                Adicionar encomenda
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setMostrarModalAdicionar(false);
+                  setNomeBusca("");
+                  setResultadosBusca([]);
+                  setEncomendaSelecionada(null);
+                }}
+                className="text-slate-400 hover:text-slate-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700">
+                  Nome do destinatário
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    placeholder="Digite o nome..."
+                    value={nomeBusca}
+                    onChange={buscarNomesCadastro}
+                    className="pl-9"
+                  />
+                </div>
+                <p className="text-xs text-slate-400">
+                  Busque no cadastro ou digite um nome novo.
+                </p>
+              </div>
+
+              {buscando && (
+                <div className="flex items-center justify-center py-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600" />
+                </div>
+              )}
+
+              {!buscando && resultadosBusca.length > 0 && (
+                <div className="border border-slate-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                  {resultadosBusca.map((resultado, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => selecionarNome(resultado.nome_completo)}
+                      className="w-full text-left px-3 py-2.5 text-sm text-slate-700 hover:bg-indigo-50 transition-colors border-b border-slate-100 last:border-b-0"
+                    >
+                      {resultado.nome_completo}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!buscando &&
+                nomeBusca.trim().length >= 2 &&
+                resultadosBusca.length === 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                    <p className="text-xs text-amber-800">
+                      Nenhum cadastro encontrado. A encomenda será adicionada com
+                      o nome digitado.
+                    </p>
+                  </div>
+                )}
+
+              {encomendaSelecionada && (
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+                  <p className="text-xs text-indigo-800">
+                    Selecionado:{" "}
+                    <span className="font-semibold">
+                      {encomendaSelecionada.nome_completo}
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMostrarModalAdicionar(false);
+                    setNomeBusca("");
+                    setResultadosBusca([]);
+                    setEncomendaSelecionada(null);
+                  }}
+                  className="flex-1 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={adicionarEncomenda}
+                  disabled={!nomeBusca.trim()}
+                  className="flex-1 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Adicionar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {mostrarConfirmacaoLogout && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setMostrarConfirmacaoLogout(false)}>
