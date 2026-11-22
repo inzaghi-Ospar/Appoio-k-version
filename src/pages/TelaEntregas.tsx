@@ -119,7 +119,7 @@ const TelaEntregas = () => {
   };
 
   const selecionarNome = (nomeCompleto: string) => {
-    setNomeBusca(nomeCompleto);
+    setNomeBusca("");
     setResultadosBusca([]);
     setEncomendaSelecionada({ nome_completo: nomeCompleto });
   };
