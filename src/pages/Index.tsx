@@ -1,33 +1,53 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Home, Package, PackageCheck, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Home,
+  Package,
+  PackageCheck,
+  User,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
+type Aba = "inicio" | "encomendas" | "perfil";
+
 const Index = () => {
   const navigate = useNavigate();
   const [usuarioNome, setUsuarioNome] = useState("");
+  const [abaAtiva, setAbaAtiva] = useState<Aba>("inicio");
   const [encomendas, setEncomendas] = useState<any[]>([]);
-    const [confirmadas, setConfirmadas] = useState<Set<string>>(new Set());
+  const [historico, setHistorico] = useState<any[]>([
+    {
+      id: "sim-1",
+      nome_entregador: "Carlos Pereira",
+      nome_destinatario: "João Silva Santos",
+      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      retirado_em: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      retirado_por: "João Silva Santos",
+      status: "retirada",
+    },
+  ]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [mostrarConfirmacaoLogout, setMostrarConfirmacaoLogout] = useState(false);
 
   useEffect(() => {
-      const nomeSalvo = localStorage.getItem("usuario_nome");
-      if (nomeSalvo) {
-        setUsuarioNome(nomeSalvo);
-      } else {
-        // Para desenvolvimento: permite acesso direto a /tela-inicial com usuário de teste
-        // Em produção, remova este bloco e descomente o redirect para /login
-        setUsuarioNome("Usuário Teste");
-        localStorage.setItem("usuario_nome", "Usuário Teste");
-        
-        // navigate("/login");
-      }
-    }, [navigate]);
+    const nomeSalvo = localStorage.getItem("usuario_nome");
+    if (nomeSalvo) {
+      setUsuarioNome(nomeSalvo);
+    } else {
+      // Para desenvolvimento: permite acesso direto a /tela-inicial com usuário de teste
+      // Em produção, remova este bloco e descomente o redirect para /login
+      setUsuarioNome("Usuário Teste");
+      localStorage.setItem("usuario_nome", "Usuário Teste");
+      // navigate("/login");
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const carregarEncomendas = async () => {
@@ -42,13 +62,13 @@ const Index = () => {
           .order("created_at", { ascending: false });
 
         if (error) {
-                  setErro("Erro ao carregar encomendas. Tente novamente.");
-                  return;
-                }
-        
-                if (data) {
-                  setEncomendas(data);
-                }
+          setErro("Erro ao carregar encomendas. Tente novamente.");
+          return;
+        }
+
+        if (data) {
+          setEncomendas(data);
+        }
       } catch {
         setErro("Erro ao carregar encomendas. Tente novamente.");
       } finally {
@@ -61,6 +81,27 @@ const Index = () => {
     const intervalo = setInterval(carregarEncomendas, 10 * 60 * 1000);
 
     return () => clearInterval(intervalo);
+  }, []);
+
+  useEffect(() => {
+    const carregarHistorico = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("encomendas")
+          .select("*")
+          .eq("status", "retirada")
+          .order("retirado_em", { ascending: false });
+
+        if (error) return;
+        if (data && data.length > 0) {
+          setHistorico(data);
+        }
+      } catch {
+        // mantém o histórico simulado
+      }
+    };
+
+    carregarHistorico();
   }, []);
 
   const formatarData = (data: string) => {
@@ -88,82 +129,170 @@ const Index = () => {
         </div>
 
         <div className="px-4">
-          <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-            <h2 className="text-sm font-medium text-slate-500 mb-1">Usuário</h2>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              {usuarioNome || "Visitante"}
-            </h1>
-          </div>
+          {abaAtiva === "inicio" && (
+            <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
+              <h2 className="text-sm font-medium text-slate-500 mb-1">Usuário</h2>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                {usuarioNome || "Visitante"}
+              </h1>
+            </div>
+          )}
 
-          <div className="bg-white rounded-3xl shadow-xl p-6">
-                      <h2 className="text-lg font-semibold text-slate-900 mb-4">
-                        Encomendas pendentes de retirada
-                      </h2>
+          {abaAtiva === "inicio" && (
+            <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                Encomendas pendentes de retirada
+              </h2>
 
-            {carregando ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              </div>
-            ) : erro ? (
-              <p className="text-sm text-destructive text-center py-8">{erro}</p>
-            ) : encomendas.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 mb-4">
-                  <PackageCheck className="w-7 h-7" />
+              {carregando ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                 </div>
-                <p className="text-sm text-slate-500">
-                  Nenhuma encomenda disponível no momento.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {encomendas.map((encomenda) => {
-                                  const jaConfirmada = confirmadas.has(encomenda.id);
-                
-                                  return (
-                                    <div
-                                      key={encomenda.id}
-                                      className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 text-indigo-600">
-                                          <Package className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                          <p className="font-semibold text-slate-900">
-                                            {encomenda.nome_entregador}
-                                          </p>
-                                          <p className="text-sm text-slate-500">
-                                            {encomenda.nome_destinatario}
-                                          </p>
-                                        </div>
-                                      </div>
-                                      <div className="text-right">
-                                        <p className="text-xs text-slate-400">Chegou em</p>
-                                        <p className="text-sm font-medium text-slate-700">
-                                          {formatarData(encomenda.created_at)}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-              </div>
-            )}
-          </div>
+              ) : erro ? (
+                <p className="text-sm text-destructive text-center py-8">{erro}</p>
+              ) : encomendas.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 mb-4">
+                    <PackageCheck className="w-7 h-7" />
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    Nenhuma encomenda disponível no momento.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {encomendas.map((encomenda) => {
+                    const jaConfirmada = historico.some((h) => h.id === encomenda.id);
+
+                    return (
+                      <div
+                        key={encomenda.id}
+                        className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 text-indigo-600">
+                            <Package className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900">
+                              {encomenda.nome_entregador}
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              {encomenda.nome_destinatario}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-slate-400">Chegou em</p>
+                          <p className="text-sm font-medium text-slate-700">
+                            {formatarData(encomenda.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {abaAtiva === "encomendas" && (
+            <div className="bg-white rounded-3xl shadow-xl p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                Histórico de encomendas retiradas
+              </h2>
+
+              {historico.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 mb-4">
+                    <PackageCheck className="w-7 h-7" />
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    Nenhuma encomenda retirada no momento.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {historico.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-4 bg-slate-50 rounded-2xl border border-slate-200"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-600">
+                          <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900">
+                            {item.nome_destinatario}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            Entregador: {item.nome_entregador}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Chegou em</span>
+                          <span className="font-medium text-slate-700">
+                            {formatarData(item.created_at)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Retirada em</span>
+                          <span className="font-medium text-slate-700">
+                            {formatarData(item.retirado_em)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Retirado por</span>
+                          <span className="font-medium text-slate-700">
+                            {item.retirado_por}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {abaAtiva === "perfil" && (
+            <div className="bg-white rounded-3xl shadow-xl p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">Perfil</h2>
+              <p className="text-sm text-slate-500">
+                {usuarioNome || "Visitante"}
+              </p>
+              <p className="text-xs text-slate-400">
+                Usuário de teste para demonstração
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200">
         <div className="max-w-sm mx-auto flex items-center justify-around py-2">
-          <button className="flex flex-col items-center gap-1 p-2 text-indigo-600">
+          <button
+            onClick={() => setAbaAtiva("inicio")}
+            className={`flex flex-col items-center gap-1 p-2 ${abaAtiva === "inicio" ? "text-indigo-600" : "text-slate-400"}`}
+          >
             <Home className="w-6 h-6" />
             <span className="text-xs">Início</span>
           </button>
-          <button className="flex flex-col items-center gap-1 p-2 text-slate-400">
+          <button
+            onClick={() => setAbaAtiva("encomendas")}
+            className={`flex flex-col items-center gap-1 p-2 ${abaAtiva === "encomendas" ? "text-indigo-600" : "text-slate-400"}`}
+          >
             <Package className="w-6 h-6" />
             <span className="text-xs">Encomendas</span>
           </button>
-          <button className="flex flex-col items-center gap-1 p-2 text-slate-400">
+          <button
+            onClick={() => setAbaAtiva("perfil")}
+            className={`flex flex-col items-center gap-1 p-2 ${abaAtiva === "perfil" ? "text-indigo-600" : "text-slate-400"}`}
+          >
             <User className="w-6 h-6" />
             <span className="text-xs">Perfil</span>
           </button>
