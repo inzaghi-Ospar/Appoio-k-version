@@ -131,7 +131,7 @@ const LoginEntregador = () => {
       }
 
       localStorage.setItem("entregador_nome", entregador.nome_completo);
-      navigate("/entregador-confirmar");
+            navigate("/tela-entregas");
     } catch {
       setErro("Houve um erro de conexão. Verifique sua internet e tente novamente.");
     } finally {

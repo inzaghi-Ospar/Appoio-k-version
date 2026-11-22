@@ -4,7 +4,7 @@ import { Package, User, LogOut, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
-const EntregadorConfirmar = () => {
+const TelaEntregas = () => {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [encomendas, setEncomendas] = useState<any[]>([]);
@@ -169,4 +169,4 @@ const EntregadorConfirmar = () => {
   );
 };
 
-export default EntregadorConfirmar;
+export default TelaEntregas;

@@ -9,7 +9,7 @@ import Cadastro from "./pages/Cadastro";
 import EsqueciSenha from "./pages/EsqueciSenha";
 import Welcome from "./pages/Welcome";
 import LoginEntregador from "./pages/LoginEntregador";
-import EntregadorConfirmar from "./pages/EntregadorConfirmar";
+import TelaEntregas from "./pages/TelaEntregas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,7 +23,7 @@ const AnimatedRoutes = () => {
         <Route path="/" element={<Welcome />} />
         <Route path="/login" element={<Login />} />
                 <Route path="/login-entregador" element={<LoginEntregador />} />
-                <Route path="/entregador-confirmar" element={<EntregadorConfirmar />} />
+                <Route path="/tela-entregas" element={<TelaEntregas />} />
                 <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
         <Route path="/tela-inicial" element={<Index />} />
