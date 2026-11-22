@@ -1,4 +1,3 @@
-# Apoio
 # Appoio
 Este é o aplicativo de entrega do ponto de apoio de Jurujuba
 Estamos fazendo testes constantes para que os moradores tenham o melhor serviço possivel, 
