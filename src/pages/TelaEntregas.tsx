@@ -11,6 +11,7 @@ import {
   Search,
   X,
   Trash2,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,23 +46,23 @@ const TelaEntregas = () => {
   }, [navigate]);
 
   const carregarPendentes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("encomendas")
-        .select("*")
-        .eq("status", "pronta")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        setErro("Erro ao carregar encomendas. Tente novamente.");
-        return;
+      try {
+        const { data, error } = await supabase
+          .from("encomendas")
+          .select("*")
+          .in("status", ["pronta", "aguardando_confirmacao"])
+          .order("created_at", { ascending: false });
+  
+        if (error) {
+          setErro("Erro ao carregar encomendas. Tente novamente.");
+          return;
+        }
+  
+        setPendentes(data || []);
+      } catch {
+        setErro("Erro de conexão. Verifique sua internet e tente novamente.");
       }
-
-      setPendentes(data || []);
-    } catch {
-      setErro("Erro de conexão. Verifique sua internet e tente novamente.");
-    }
-  };
+    };
 
   const carregarHistorico = async () => {
     try {
@@ -143,7 +144,7 @@ const TelaEntregas = () => {
                   codigo: `ENV-${Date.now()}`,
                   nome_destinatario: nomeDestinatario,
                   nome_entregador: nome,
-                  status: "pronta",
+                  status: "aguardando_confirmacao",
                 });
   
           if (error) {
@@ -275,14 +276,10 @@ const TelaEntregas = () => {
                           </p>
                         </div>
                       </div>
-                      <Button
-                        onClick={() => confirmarEntrega(encomenda.id)}
-                        className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                        size="sm"
-                      >
-                        <CheckCircle2 className="w-4 h-4 mr-1" />
-                        Confirmar
-                      </Button>
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+                        <Clock className="w-3.5 h-3.5" />
+                        Aguardando confirmação
+                      </span>
                     </div>
                   ))}
                 </div>
