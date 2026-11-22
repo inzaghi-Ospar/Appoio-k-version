@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -8,6 +8,7 @@ import {
   User,
   CheckCircle2,
   Clock,
+  Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ const Index = () => {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [mostrarConfirmacaoLogout, setMostrarConfirmacaoLogout] = useState(false);
+    const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
 
   useEffect(() => {
     const nomeSalvo = localStorage.getItem("usuario_nome");
@@ -112,6 +114,17 @@ const Index = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handleFotoPerfil = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFotoPerfil(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -262,12 +275,40 @@ const Index = () => {
           {abaAtiva === "perfil" && (
             <div className="bg-white rounded-3xl shadow-xl p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-4">Perfil</h2>
-              <p className="text-sm text-slate-500">
-                {usuarioNome || "Visitante"}
-              </p>
-              <p className="text-xs text-slate-400">
-                Usuário de teste para demonstração
-              </p>
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden">
+                    {fotoPerfil ? (
+                      <img
+                        src={fotoPerfil}
+                        alt="Foto de perfil"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-12 h-12 text-indigo-600" />
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="foto-perfil"
+                    onChange={handleFotoPerfil}
+                  />
+                  <label
+                    htmlFor="foto-perfil"
+                    className="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </label>
+                </div>
+                <p className="text-sm text-slate-500 mt-3">
+                  {usuarioNome || "Visitante"}
+                </p>
+                <p className="text-xs text-slate-400">
+                  Usuário de teste para demonstração
+                </p>
+              </div>
             </div>
           )}
         </div>
