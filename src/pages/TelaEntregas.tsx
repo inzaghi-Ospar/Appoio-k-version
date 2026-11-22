@@ -138,12 +138,13 @@ const TelaEntregas = () => {
       }
   
       try {
-        for (const nomeDestinatario of nomesSelecionados) {
-          const { error } = await supabase.from("encomendas").insert({
-            nome_destinatario: nomeDestinatario,
-            nome_entregador: nome,
-            status: "pronta",
-          });
+              for (const nomeDestinatario of nomesSelecionados) {
+                const { error } = await supabase.from("encomendas").insert({
+                  codigo: `ENV-${Date.now()}`,
+                  nome_destinatario: nomeDestinatario,
+                  nome_entregador: nome,
+                  status: "pronta",
+                });
   
           if (error) {
             console.error("Erro detalhado:", error);
