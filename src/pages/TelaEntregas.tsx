@@ -1,43 +1,74 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, User, LogOut, CheckCircle2, Clock } from "lucide-react";
+import {
+  ArrowLeft,
+  Package,
+  PackageCheck,
+  User,
+  CheckCircle2,
+  Clock,
+  Camera,
+  Plus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+
+type Aba = "pendentes" | "historico" | "perfil";
 
 const TelaEntregas = () => {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
-  const [encomendas, setEncomendas] = useState<any[]>([]);
+  const [abaAtiva, setAbaAtiva] = useState<Aba>("pendentes");
+  const [pendentes, setPendentes] = useState<any[]>([]);
+  const [historico, setHistorico] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [mostrarConfirmacaoLogout, setMostrarConfirmacaoLogout] = useState(false);
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
 
   useEffect(() => {
     const nomeSalvo = localStorage.getItem("entregador_nome");
     if (nomeSalvo) {
       setNome(nomeSalvo);
-      buscarEncomendas(nomeSalvo);
+      carregarDados(nomeSalvo);
     } else {
       navigate("/login-entregador");
     }
   }, [navigate]);
 
-  const buscarEncomendas = async (entregadorNome: string) => {
+  const carregarDados = async (entregadorNome: string) => {
+    setCarregando(true);
+    setErro("");
+
     try {
-      const { data, error } = await supabase
+      const { data: pendentesData, error: erroPendentes } = await supabase
         .from("encomendas")
         .select("*")
         .eq("entregador", entregadorNome)
         .eq("status", "pendente")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Erro ao buscar encomendas:", error);
-        setEncomendas([]);
-      } else {
-        setEncomendas(data || []);
+      if (erroPendentes) {
+        setErro("Erro ao carregar encomendas. Tente novamente.");
+        return;
       }
-    } catch (err) {
-      console.error("Erro de conexão:", err);
-      setEncomendas([]);
+
+      const { data: historicoData, error: erroHistorico } = await supabase
+        .from("encomendas")
+        .select("*")
+        .eq("entregador", entregadorNome)
+        .eq("status", "entregue")
+        .order("entregue_em", { ascending: false });
+
+      if (erroHistorico) {
+        setErro("Erro ao carregar histórico. Tente novamente.");
+        return;
+      }
+
+      setPendentes(pendentesData || []);
+      setHistorico(historicoData || []);
+    } catch {
+      setErro("Erro de conexão. Verifique sua internet e tente novamente.");
     } finally {
       setCarregando(false);
     }
@@ -55,7 +86,8 @@ const TelaEntregas = () => {
         return;
       }
 
-      setEncomendas(encomendas.filter((e) => e.id !== id));
+      setPendentes(pendentes.filter((e) => e.id !== id));
+      if (nome) carregarDados(nome);
     } catch {
       alert("Erro de conexão. Verifique sua internet e tente novamente.");
     }
@@ -71,79 +103,90 @@ const TelaEntregas = () => {
     });
   };
 
+  const handleFotoPerfil = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFotoPerfil(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const sair = () => {
     localStorage.removeItem("entregador_nome");
     navigate("/login-entregador");
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F1EC]">
-      <div className="max-w-md mx-auto p-4">
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-          <div className="bg-indigo-600 text-white p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                  <Package className="w-6 h-6" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold">Área do Entregador</h1>
-                  <p className="text-sm opacity-90">{nome}</p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                className="text-white hover:bg-white/10"
-                onClick={sair}
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#F4F1EC] pb-16">
+      <div className="w-full max-w-sm mx-auto">
+        <div className="flex items-center justify-between mb-6 p-4">
+          <button
+            type="button"
+            onClick={() => setMostrarConfirmacaoLogout(true)}
+            className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Sair
+          </button>
+        </div>
 
-          <div className="p-6">
-            {carregando ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="px-4">
+          {abaAtiva === "pendentes" && (
+            <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Encomendas pendentes
+                </h2>
+                <Button
+                  onClick={() => {
+                    // TODO: configurar fluxo de adicionar entrega
+                    alert("Funcionalidade de adicionar entrega será configurada em breve.");
+                  }}
+                  className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                  size="sm"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Adicionar
+                </Button>
               </div>
-            ) : encomendas.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                  <Package className="w-8 h-8 text-slate-400" />
+
+              {carregando ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
                 </div>
-                <h2 className="text-lg font-medium text-slate-900 mb-2">
-                  Nenhuma encomenda pendente
-                </h2>
-                <p className="text-sm text-slate-500">
-                  Todas as entregas foram confirmadas.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <h2 className="text-sm font-medium text-slate-600 mb-3">
-                  Encomendas para confirmar ({encomendas.length})
-                </h2>
-                {encomendas.map((encomenda) => (
-                  <div
-                    key={encomenda.id}
-                    className="bg-slate-50 rounded-2xl p-4 border border-slate-100"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium text-slate-900 truncate">
-                            {encomenda.nome_destinatario}
-                          </span>
-                          <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800 rounded-full">
-                            Pendente
-                          </span>
+              ) : erro ? (
+                <p className="text-sm text-destructive text-center py-8">{erro}</p>
+              ) : pendentes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 mb-4">
+                    <Package className="w-7 h-7" />
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    Nenhuma encomenda pendente no momento.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pendentes.map((encomenda) => (
+                    <div
+                      key={encomenda.id}
+                      className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 text-indigo-600">
+                          <Package className="w-5 h-5" />
                         </div>
-                        <p className="text-sm text-slate-600 mb-1">
-                          {encomenda.endereco}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {formatarData(encomenda.created_at)}
-                        </p>
+                        <div>
+                          <p className="font-semibold text-slate-900">
+                            {encomenda.nome_destinatario}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            {encomenda.endereco}
+                          </p>
+                        </div>
                       </div>
                       <Button
                         onClick={() => confirmarEntrega(encomenda.id)}
@@ -154,17 +197,163 @@ const TelaEntregas = () => {
                         Confirmar
                       </Button>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {abaAtiva === "historico" && (
+            <div className="bg-white rounded-3xl shadow-xl p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                Histórico de entregas
+              </h2>
+
+              {carregando ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+                </div>
+              ) : historico.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 mb-4">
+                    <PackageCheck className="w-7 h-7" />
                   </div>
-                ))}
+                  <p className="text-sm text-slate-500">
+                    Nenhuma entrega confirmada no momento.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {historico.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-4 bg-slate-50 rounded-2xl border border-slate-200"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-600">
+                          <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900">
+                            {item.nome_destinatario}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            {item.endereco}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Entregue em</span>
+                          <span className="font-medium text-slate-700">
+                            {formatarData(item.entregue_em)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {abaAtiva === "perfil" && (
+            <div className="bg-white rounded-3xl shadow-xl p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">Perfil</h2>
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden">
+                    {fotoPerfil ? (
+                      <img
+                        src={fotoPerfil}
+                        alt="Foto de perfil"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-12 h-12 text-indigo-600" />
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="foto-perfil-entregador"
+                    onChange={handleFotoPerfil}
+                  />
+                  <label
+                    htmlFor="foto-perfil-entregador"
+                    className="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </label>
+                </div>
+                <p className="text-sm text-slate-500 mt-3">
+                  {nome || "Entregador"}
+                </p>
+                <p className="text-xs text-slate-400">
+                  Entregador
+                </p>
               </div>
-            )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200">
+        <div className="max-w-sm mx-auto flex items-center justify-around py-2">
+          <button
+            onClick={() => setAbaAtiva("pendentes")}
+            className={`flex flex-col items-center gap-1 p-2 ${abaAtiva === "pendentes" ? "text-indigo-600" : "text-slate-400"}`}
+          >
+            <Package className="w-6 h-6" />
+            <span className="text-xs">Pendentes</span>
+          </button>
+          <button
+            onClick={() => setAbaAtiva("historico")}
+            className={`flex flex-col items-center gap-1 p-2 ${abaAtiva === "historico" ? "text-indigo-600" : "text-slate-400"}`}
+          >
+            <PackageCheck className="w-6 h-6" />
+            <span className="text-xs">Histórico</span>
+          </button>
+          <button
+            onClick={() => setAbaAtiva("perfil")}
+            className={`flex flex-col items-center gap-1 p-2 ${abaAtiva === "perfil" ? "text-indigo-600" : "text-slate-400"}`}
+          >
+            <User className="w-6 h-6" />
+            <span className="text-xs">Perfil</span>
+          </button>
+        </div>
+      </div>
+
+      {mostrarConfirmacaoLogout && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setMostrarConfirmacaoLogout(false)}>
+          <div className="bg-white rounded-3xl shadow-xl p-6 w-full max-w-sm mx-auto" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Sair da conta?</h3>
+            <p className="text-sm text-slate-500 mb-6">Tem certeza que deseja sair da sua conta?</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setMostrarConfirmacaoLogout(false)}
+                className="flex-1 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem("entregador_nome");
+                  setMostrarConfirmacaoLogout(false);
+                  navigate("/login-entregador");
+                }}
+                className="flex-1 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+              >
+                Sim, sair
+              </button>
+            </div>
           </div>
         </div>
-
-        <p className="text-center text-xs text-slate-400 mt-4">
-          Appoio - Sistema de recebimento de encomendas
-        </p>
-      </div>
+      )}
     </div>
   );
 };
