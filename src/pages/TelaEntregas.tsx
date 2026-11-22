@@ -37,61 +37,61 @@ const TelaEntregas = () => {
   }, [navigate]);
 
   const carregarDados = async (entregadorNome: string) => {
-    setCarregando(true);
-    setErro("");
-
-    try {
-      const { data: pendentesData, error: erroPendentes } = await supabase
-        .from("encomendas")
-        .select("*")
-        .eq("entregador", entregadorNome)
-        .eq("status", "pendente")
-        .order("created_at", { ascending: false });
-
-      if (erroPendentes) {
-        setErro("Erro ao carregar encomendas. Tente novamente.");
-        return;
+      setCarregando(true);
+      setErro("");
+  
+      try {
+        const { data: pendentesData, error: erroPendentes } = await supabase
+          .from("encomendas")
+          .select("*")
+          .eq("entregador", entregadorNome)
+          .eq("status", "pronta")
+          .order("created_at", { ascending: false });
+  
+        if (erroPendentes) {
+          setErro("Erro ao carregar encomendas. Tente novamente.");
+          return;
+        }
+  
+        const { data: historicoData, error: erroHistorico } = await supabase
+          .from("encomendas")
+          .select("*")
+          .eq("entregador", entregadorNome)
+          .eq("status", "retirada")
+          .order("retirado_em", { ascending: false });
+  
+        if (erroHistorico) {
+          setErro("Erro ao carregar histórico. Tente novamente.");
+          return;
+        }
+  
+        setPendentes(pendentesData || []);
+        setHistorico(historicoData || []);
+      } catch {
+        setErro("Erro de conexão. Verifique sua internet e tente novamente.");
+      } finally {
+        setCarregando(false);
       }
-
-      const { data: historicoData, error: erroHistorico } = await supabase
-        .from("encomendas")
-        .select("*")
-        .eq("entregador", entregadorNome)
-        .eq("status", "entregue")
-        .order("entregue_em", { ascending: false });
-
-      if (erroHistorico) {
-        setErro("Erro ao carregar histórico. Tente novamente.");
-        return;
-      }
-
-      setPendentes(pendentesData || []);
-      setHistorico(historicoData || []);
-    } catch {
-      setErro("Erro de conexão. Verifique sua internet e tente novamente.");
-    } finally {
-      setCarregando(false);
-    }
-  };
+    };
 
   const confirmarEntrega = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("encomendas")
-        .update({ status: "entregue", entregue_em: new Date().toISOString() })
-        .eq("id", id);
-
-      if (error) {
-        alert("Erro ao confirmar entrega. Tente novamente.");
-        return;
+      try {
+        const { error } = await supabase
+          .from("encomendas")
+          .update({ status: "retirada", retirado_em: new Date().toISOString() })
+          .eq("id", id);
+  
+        if (error) {
+          alert("Erro ao confirmar entrega. Tente novamente.");
+          return;
+        }
+  
+        setPendentes(pendentes.filter((e) => e.id !== id));
+        if (nome) carregarDados(nome);
+      } catch {
+        alert("Erro de conexão. Verifique sua internet e tente novamente.");
       }
-
-      setPendentes(pendentes.filter((e) => e.id !== id));
-      if (nome) carregarDados(nome);
-    } catch {
-      alert("Erro de conexão. Verifique sua internet e tente novamente.");
-    }
-  };
+    };
 
   const formatarData = (data: string) => {
     return new Date(data).toLocaleString("pt-BR", {
@@ -245,9 +245,9 @@ const TelaEntregas = () => {
 
                       <div className="space-y-1 text-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-400">Entregue em</span>
+                          <span className="text-slate-400">Retirada em</span>
                           <span className="font-medium text-slate-700">
-                            {formatarData(item.entregue_em)}
+                            {formatarData(item.retirado_em)}
                           </span>
                         </div>
                       </div>
