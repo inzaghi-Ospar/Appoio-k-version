@@ -37,42 +37,40 @@ const TelaEntregas = () => {
   }, [navigate]);
 
   const carregarDados = async (entregadorNome: string) => {
-      setCarregando(true);
-      setErro("");
-  
-      try {
-        const { data: pendentesData, error: erroPendentes } = await supabase
-          .from("encomendas")
-          .select("*")
-          .eq("entregador", entregadorNome)
-          .eq("status", "pronta")
-          .order("created_at", { ascending: false });
-  
-        if (erroPendentes) {
-          setErro("Erro ao carregar encomendas. Tente novamente.");
-          return;
+        setCarregando(true);
+        setErro("");
+    
+        try {
+          const { data: pendentesData, error: erroPendentes } = await supabase
+            .from("encomendas")
+            .select("*")
+            .eq("status", "pronta")
+            .order("created_at", { ascending: false });
+    
+          if (erroPendentes) {
+            setErro("Erro ao carregar encomendas. Tente novamente.");
+            return;
+          }
+    
+          const { data: historicoData, error: erroHistorico } = await supabase
+            .from("encomendas")
+            .select("*")
+            .eq("status", "retirada")
+            .order("retirado_em", { ascending: false });
+    
+          if (erroHistorico) {
+            setErro("Erro ao carregar histórico. Tente novamente.");
+            return;
+          }
+    
+          setPendentes(pendentesData || []);
+          setHistorico(historicoData || []);
+        } catch {
+          setErro("Erro de conexão. Verifique sua internet e tente novamente.");
+        } finally {
+          setCarregando(false);
         }
-  
-        const { data: historicoData, error: erroHistorico } = await supabase
-          .from("encomendas")
-          .select("*")
-          .eq("entregador", entregadorNome)
-          .eq("status", "retirada")
-          .order("retirado_em", { ascending: false });
-  
-        if (erroHistorico) {
-          setErro("Erro ao carregar histórico. Tente novamente.");
-          return;
-        }
-  
-        setPendentes(pendentesData || []);
-        setHistorico(historicoData || []);
-      } catch {
-        setErro("Erro de conexão. Verifique sua internet e tente novamente.");
-      } finally {
-        setCarregando(false);
-      }
-    };
+      };
 
   const confirmarEntrega = async (id: string) => {
       try {
@@ -171,33 +169,33 @@ const TelaEntregas = () => {
               ) : (
                 <div className="space-y-3">
                   {pendentes.map((encomenda) => (
-                    <div
-                      key={encomenda.id}
-                      className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 text-indigo-600">
-                          <Package className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-slate-900">
-                            {encomenda.nome_destinatario}
-                          </p>
-                          <p className="text-sm text-slate-500">
-                            {encomenda.endereco}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => confirmarEntrega(encomenda.id)}
-                        className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                        size="sm"
-                      >
-                        <CheckCircle2 className="w-4 h-4 mr-1" />
-                        Confirmar
-                      </Button>
-                    </div>
-                  ))}
+                                      <div
+                                        key={encomenda.id}
+                                        className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 text-indigo-600">
+                                            <Package className="w-5 h-5" />
+                                          </div>
+                                          <div>
+                                            <p className="font-semibold text-slate-900">
+                                              {encomenda.nome_destinatario}
+                                            </p>
+                                            <p className="text-sm text-slate-500">
+                                              Entregador: {encomenda.nome_entregador}
+                                            </p>
+                                          </div>
+                                        </div>
+                                        <Button
+                                          onClick={() => confirmarEntrega(encomenda.id)}
+                                          className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                                          size="sm"
+                                        >
+                                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                                          Confirmar
+                                        </Button>
+                                      </div>
+                                    ))}
                 </div>
               )}
             </div>
@@ -225,34 +223,34 @@ const TelaEntregas = () => {
               ) : (
                 <div className="space-y-4">
                   {historico.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-4 bg-slate-50 rounded-2xl border border-slate-200"
-                    >
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-600">
-                          <CheckCircle2 className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-slate-900">
-                            {item.nome_destinatario}
-                          </p>
-                          <p className="text-sm text-slate-500">
-                            {item.endereco}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1 text-sm">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-400">Retirada em</span>
-                          <span className="font-medium text-slate-700">
-                            {formatarData(item.retirado_em)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                                      <div
+                                        key={item.id}
+                                        className="p-4 bg-slate-50 rounded-2xl border border-slate-200"
+                                      >
+                                        <div className="flex items-center gap-3 mb-3">
+                                          <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-600">
+                                            <CheckCircle2 className="w-5 h-5" />
+                                          </div>
+                                          <div>
+                                            <p className="font-semibold text-slate-900">
+                                              {item.nome_destinatario}
+                                            </p>
+                                            <p className="text-sm text-slate-500">
+                                              Entregador: {item.nome_entregador}
+                                            </p>
+                                          </div>
+                                        </div>
+                  
+                                        <div className="space-y-1 text-sm">
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-slate-400">Retirada em</span>
+                                            <span className="font-medium text-slate-700">
+                                              {formatarData(item.retirado_em)}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
                 </div>
               )}
             </div>
