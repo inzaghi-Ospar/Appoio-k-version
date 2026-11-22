@@ -39,6 +39,13 @@ const LoginEntregador = () => {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
+  useEffect(() => {
+    const entregadorSalvo = localStorage.getItem("entregador_nome");
+    if (entregadorSalvo) {
+      navigate("/tela-entregas");
+    }
+  }, [navigate]);
+
   const copiarNome = () => {
     if (entregadorEncontradoCpf) {
       navigator.clipboard.writeText(entregadorEncontradoCpf.nome_completo);
@@ -131,7 +138,7 @@ const LoginEntregador = () => {
       }
 
       localStorage.setItem("entregador_nome", entregador.nome_completo);
-            navigate("/tela-entregas");
+      navigate("/tela-entregas");
     } catch {
       setErro("Houve um erro de conexão. Verifique sua internet e tente novamente.");
     } finally {
@@ -142,15 +149,6 @@ const LoginEntregador = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F4F1EC] p-4">
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-6">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-5"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar
-        </button>
-
         {modoBuscaCpf ? (
           <>
             <div className="text-center mb-5">
@@ -277,15 +275,6 @@ const LoginEntregador = () => {
               <Button type="submit" className="w-full rounded-full" disabled={carregando}>
                 {carregando ? "Entrando..." : "Entrar"}
               </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full text-sm text-slate-500 hover:text-slate-800"
-                onClick={() => navigate("/login-entregador")}
-              >
-                Login novamente
-              </Button>
             </form>
           </>
         ) : (
@@ -361,23 +350,32 @@ const LoginEntregador = () => {
                 {carregando ? "Entrando..." : "Entrar"}
               </Button>
 
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => navigate("/login")}
+                >
+                  Voltar
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                  onClick={() => navigate("/login")}
+                >
+                  Login Normal
+                </Button>
+              </div>
+
               <Button
                 type="button"
                 variant="ghost"
                 className="w-full text-sm text-slate-500 hover:text-slate-800"
-                onClick={() => navigate("/login-entregador")}
+                onClick={() => navigate("/esqueci-senha")}
               >
-                Login novamente
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full rounded-full"
-                onClick={() => setModoBuscaCpf(true)}
-              >
-                <Search className="w-4 h-4 mr-2" />
-                Tentar login com CPF?
+                Esqueceu sua senha?
               </Button>
             </form>
           </>
