@@ -58,11 +58,12 @@ const Index = () => {
       setErro("");
 
       try {
-        const { data, error } = await supabase
-          .from("encomendas")
-          .select("*")
-          .eq("status", "pronta")
-          .order("created_at", { ascending: false });
+              const { data, error } = await supabase
+                .from("encomendas")
+                .select("*")
+                .eq("status", "pronta")
+                .eq("nome_destinatario", usuarioNome)
+                .order("created_at", { ascending: false });
 
         if (error) {
           setErro("Erro ao carregar encomendas. Tente novamente.");
@@ -89,11 +90,12 @@ const Index = () => {
   useEffect(() => {
     const carregarHistorico = async () => {
       try {
-        const { data, error } = await supabase
-          .from("encomendas")
-          .select("*")
-          .eq("status", "retirada")
-          .order("retirado_em", { ascending: false });
+              const { data, error } = await supabase
+                .from("encomendas")
+                .select("*")
+                .eq("status", "retirada")
+                .eq("nome_destinatario", usuarioNome)
+                .order("retirado_em", { ascending: false });
 
         if (error) return;
         if (data && data.length > 0) {

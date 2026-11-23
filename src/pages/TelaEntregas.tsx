@@ -51,6 +51,7 @@ const TelaEntregas = () => {
         const { data, error } = await supabase
           .from("encomendas")
           .select("*")
+          .eq("nome_entregador", nome)
           .in("status", ["pronta", "aguardando_confirmacao"])
           .order("created_at", { ascending: false });
   
@@ -66,12 +67,13 @@ const TelaEntregas = () => {
     };
 
   const carregarHistorico = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("encomendas")
-        .select("*")
-        .eq("status", "retirada")
-        .order("retirado_em", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("encomendas")
+          .select("*")
+          .eq("nome_entregador", nome)
+          .eq("status", "retirada")
+          .order("retirado_em", { ascending: false });
 
       if (error) return;
       if (data) setHistorico(data);
