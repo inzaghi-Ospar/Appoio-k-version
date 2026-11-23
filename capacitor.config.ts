@@ -1,9 +1,23 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: 'com.example.appoiokversion',
-  appName: 'Appoio-k-version',
-  webDir: 'dist'
+  appId: "com.appoio.app",
+  appName: "Appoio",
+  webDir: "dist",
+  server: {
+    androidScheme: "https",
+    iosScheme: "https",
+  },
+  plugins: {
+    Filesystem: {
+      permissions: {
+        android: [
+          "READ_EXTERNAL_STORAGE",
+          "WRITE_EXTERNAL_STORAGE",
+        ],
+      },
+    },
+  },
 };
 
 export default config;

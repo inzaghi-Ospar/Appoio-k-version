@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 
 interface VersaoRemota {
   versao: string;
@@ -8,10 +9,30 @@ interface VersaoRemota {
   urlDownload: string;
 }
 
+type StatusAtualizacao = "ocioso" | "verificando" | "disponivel" | "baixando" | "pronto" | "erro";
+
+interface EstadoAtualizacao {
+  status: StatusAtualizacao;
+  progresso: number;
+  versaoAtual: string;
+  versaoRemota: string | null;
+  mensagem: string;
+  forcarAtualizacao: boolean;
+  urlDownload: string;
+  erro: string | null;
+}
+
 export const useAtualizacoes = (versaoAtual: string) => {
-  const [atualizacaoDisponivel, setAtualizacaoDisponivel] = useState(false);
-  const [versaoRemota, setVersaoRemota] = useState<VersaoRemota | null>(null);
-  const [carregando, setCarregando] = useState(true);
+  const [estado, setEstado] = useState<EstadoAtualizacao>({
+    status: "ocioso",
+    progresso: 0,
+    versaoAtual,
+    versaoRemota: null,
+    mensagem: "",
+    forcarAtualizacao: false,
+    urlDownload: "",
+    erro: null,
+  });
 
   const compararVersoes = (v1: string, v2: string): number => {
     const partes1 = v1.split(".").map(Number);
@@ -26,7 +47,9 @@ export const useAtualizacoes = (versaoAtual: string) => {
     return 0;
   };
 
-  const verificarAtualizacao = async () => {
+  const verificarAtualizacao = useCallback(async () => {
+    setEstado((prev) => ({ ...prev, status: "verificando", erro: null }));
+
     try {
       const { data, error } = await supabase
         .from("configuracoes")
@@ -35,7 +58,7 @@ export const useAtualizacoes = (versaoAtual: string) => {
         .maybeSingle();
 
       if (error || !data) {
-        setCarregando(false);
+        setEstado((prev) => ({ ...prev, status: "ocioso" }));
         return;
       }
 
@@ -43,30 +66,128 @@ export const useAtualizacoes = (versaoAtual: string) => {
         versao: data.versao,
         forcarAtualizacao: data.forcar_atualizacao || false,
         mensagem: data.mensagem || "Uma nova versão está disponível!",
-        urlDownload: data.url_download || "https://play.google.com/store/apps/details?id=com.appoio.app",
+        urlDownload: data.url_download || "",
       };
 
-      setVersaoRemota(remota);
-
       const cmp = compararVersoes(versaoAtual, remota.versao);
+
       if (cmp < 0) {
-        setAtualizacaoDisponivel(true);
+        setEstado({
+          status: "disponivel",
+          progresso: 0,
+          versaoAtual,
+          versaoRemota: remota.versao,
+          mensagem: remota.mensagem,
+          forcarAtualizacao: remota.forcarAtualizacao,
+          urlDownload: remota.urlDownload,
+          erro: null,
+        });
+      } else {
+        setEstado({
+          status: "ocioso",
+          progresso: 0,
+          versaoAtual,
+          versaoRemota: remota.versao,
+          mensagem: "",
+          forcarAtualizacao: false,
+          urlDownload: "",
+          erro: null,
+        });
       }
     } catch (err) {
       console.error("Erro ao verificar atualização:", err);
-    } finally {
-      setCarregando(false);
+      setEstado((prev) => ({
+        ...prev,
+        status: "ocioso",
+        erro: "Erro ao verificar atualização",
+      }));
     }
-  };
+  }, [versaoAtual, compararVersoes]);
+
+  const baixarEInstalar = useCallback(async () => {
+    const url = estado.urlDownload;
+    const versao = estado.versaoRemota;
+
+    if (!url || !versao) {
+      setEstado((prev) => ({ ...prev, status: "erro", erro: "URL de download inválida" }));
+      return;
+    }
+
+    setEstado((prev) => ({ ...prev, status: "baixando", progresso: 0, erro: null }));
+
+    try {
+      const resposta = await fetch(url);
+
+      if (!resposta.ok || !resposta.body) {
+        throw new Error("Falha ao baixar a atualização");
+      }
+
+      const tamanhoTotal = resposta.headers.get("content-length");
+      const total = tamanhoTotal ? parseInt(tamanhoTotal, 10) : 0;
+      const leitor = resposta.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let recebido = 0;
+
+      while (true) {
+        const { feito, valor } = await leitor.read();
+
+        if (feito) break;
+
+        chunks.push(valor);
+        recebido += valor.length;
+
+        if (total > 0) {
+          const percentual = Math.round((recebido / total) * 100);
+          setEstado((prev) => ({ ...prev, progresso: percentual }));
+        }
+      }
+
+      const blob = new Blob(chunks);
+      const arrayBuffer = await blob.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      const nomeArquivo = `appoio-${versao}.apk`;
+
+      const texto = String.fromCharCode(...bytes);
+      const base64 = btoa(texto);
+
+      await Filesystem.writeFile({
+        path: nomeArquivo,
+        data: base64,
+        directory: Directory.Documents,
+        encoding: Encoding.Base64,
+      });
+
+      setEstado((prev) => ({ ...prev, status: "pronto", progresso: 100 }));
+
+      // Tentar abrir o APK para instalação
+      try {
+        const uri = Filesystem.getUri({
+          path: nomeArquivo,
+          directory: Directory.Documents,
+        }).uri;
+
+        window.open(`file://${uri}`, "_blank");
+      } catch (err) {
+        console.error("Erro ao abrir APK:", err);
+        window.open(url, "_blank");
+      }
+    } catch (err: any) {
+      console.error("Erro ao baixar atualização:", err);
+      setEstado((prev) => ({
+        ...prev,
+        status: "erro",
+        erro: err.message || "Erro ao baixar atualização",
+      }));
+    }
+  }, [estado.urlDownload, estado.versaoRemota]);
 
   useEffect(() => {
     verificarAtualizacao();
-  }, [versaoAtual]);
+  }, [verificarAtualizacao]);
 
   return {
-    atualizacaoDisponivel,
-    versaoRemota,
-    carregando,
-    compararVersoes,
+    ...estado,
+    verificarAtualizacao,
+    baixarEInstalar,
   };
 };

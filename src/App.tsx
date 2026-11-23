@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
@@ -13,11 +13,12 @@ import LoginEntregador from "./pages/LoginEntregador";
 import TelaEntregas from "./pages/TelaEntregas";
 import NotFound from "./pages/NotFound";
 import AtualizacaoDialog from "@/components/AtualizacaoDialog";
+import { DownloadProgresso } from "@/components/DownloadProgresso";
 import { useAtualizacoes } from "@/hooks/use-atualizacoes";
 
 const queryClient = new QueryClient();
 
-const VERSAO_ATUAL = "0.0.0";
+const VERSAO_ATUAL = "0.1.0";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -42,9 +43,20 @@ const AnimatedRoutes = () => {
 const App = () => {
   const { atualizacaoDisponivel, versaoRemota, carregando } = useAtualizacoes(VERSAO_ATUAL);
   const [dispensado, setDispensado] = useState(false);
+  const [mostrarDownload, setMostrarDownload] = useState(false);
+  const [urlDownload, setUrlDownload] = useState("");
 
   const mostrarDialog =
     !carregando && atualizacaoDisponivel && !dispensado;
+
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setUrlDownload(e.detail.url);
+      setMostrarDownload(true);
+    };
+    window.addEventListener("iniciar-download", handler as EventListener);
+    return () => window.removeEventListener("iniciar-download", handler as EventListener);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -63,6 +75,13 @@ const App = () => {
           urlDownload={versaoRemota?.urlDownload || "https://play.google.com/store/apps/details?id=com.appoio.app"}
           onFechar={() => setDispensado(true)}
         />
+        {mostrarDownload && (
+          <DownloadProgresso
+            url={urlDownload}
+            onFechar={() => setMostrarDownload(false)}
+            onInstalado={() => setMostrarDownload(false)}
+          />
+        )}
       </TooltipProvider>
     </QueryClientProvider>
   );

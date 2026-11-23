@@ -3,7 +3,7 @@
 echo "=========================================="
 echo "  Instalando Capacitor..."
 echo "=========================================="
-npm install @capacitor/core @capacitor/cli @capacitor/android
+npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/ios @capacitor/filesystem @capacitor/device @capacitor/app
 
 echo "=========================================="
 echo "  Buildando o app web..."

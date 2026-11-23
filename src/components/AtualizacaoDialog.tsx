@@ -1,4 +1,4 @@
-import { Download, X, AlertTriangle } from "lucide-react";
+import { DownloadProgresso } from "@/components/DownloadProgresso";
 
 interface AtualizacaoDialogProps {
   aberto: boolean;
@@ -21,17 +21,24 @@ const AtualizacaoDialog = ({
 }: AtualizacaoDialogProps) => {
   if (!aberto) return null;
 
-  const baixarAtualizacao = () => {
-    window.open(urlDownload, "_blank");
+  const handleInstalado = () => {
+    onFechar();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl shadow-xl p-6 w-full max-w-sm mx-auto">
-        <div className="flex items-center justify-between mb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm mx-auto">
+        <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 text-amber-600">
-              <AlertTriangle className="w-5 h-5" />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
             </div>
             <h3 className="text-lg font-bold text-slate-900">
               Atualização disponível
@@ -43,7 +50,14 @@ const AtualizacaoDialog = ({
               onClick={onFechar}
               className="text-slate-400 hover:text-slate-700 transition-colors"
             >
-              <X className="w-5 h-5" />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           )}
         </div>
@@ -76,10 +90,24 @@ const AtualizacaoDialog = ({
             )}
             <button
               type="button"
-              onClick={baixarAtualizacao}
+              onClick={() => {
+                // Abre o download com progresso
+                // O DownloadProgresso será renderizado pelo App.tsx
+                window.dispatchEvent(
+                  new CustomEvent("iniciar-download", { detail: { url: urlDownload } })
+                );
+                onFechar();
+              }}
               className="flex-1 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors inline-flex items-center justify-center gap-1.5"
             >
-              <Download className="w-4 h-4" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
               Atualizar
             </button>
           </div>
