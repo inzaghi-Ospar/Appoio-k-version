@@ -276,48 +276,50 @@ const Index = () => {
           )}
 
           {abaAtiva === "perfil" && (
-            <div className="bg-white rounded-3xl shadow-xl p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">Perfil</h2>
-              <div className="flex flex-col items-center mb-6">
-                <div className="relative">
-                  <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden">
-                    {fotoPerfil ? (
-                      <img
-                        src={fotoPerfil}
-                        alt="Foto de perfil"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-12 h-12 text-indigo-600" />
+                      <div className="bg-white rounded-3xl shadow-xl p-6">
+                        <h2 className="text-lg font-semibold text-slate-900 mb-4">Perfil</h2>
+                        <div className="flex flex-col items-center mb-6">
+                          <div className="relative">
+                            <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden">
+                              {fotoPerfil ? (
+                                <img
+                                  src={fotoPerfil}
+                                  alt="Foto de perfil"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <User className="w-12 h-12 text-indigo-600" />
+                              )}
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              id="foto-perfil"
+                              onChange={handleFotoPerfil}
+                            />
+                            <label
+                              htmlFor="foto-perfil"
+                              className="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors"
+                            >
+                              <Camera className="w-4 h-4" />
+                            </label>
+                          </div>
+                          <p className="text-sm text-slate-500 mt-3">
+                            {usuarioNome || "Visitante"}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            Usuário de teste para demonstração
+                          </p>
+                        </div>
+                        <div className="mt-6">
+                          <ReportarProblema
+                            usuarioNome={usuarioNome || "Visitante"}
+                            usuarioTipo="cliente"
+                          />
+                        </div>
+                      </div>
                     )}
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    id="foto-perfil"
-                    onChange={handleFotoPerfil}
-                  />
-                  <label
-                    htmlFor="foto-perfil"
-                    className="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors"
-                  >
-                    <Camera className="w-4 h-4" />
-                  </label>
-                </div>
-                <p className="text-sm text-slate-500 mt-3">
-                  {usuarioNome || "Visitante"}
-                </p>
-                <p className="text-xs text-slate-400">
-                  Usuário de teste para demonstração
-                </p>
-                <ReportarProblema
-                  usuarioNome={usuarioNome || "Visitante"}
-                  usuarioTipo="cliente"
-                />
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
