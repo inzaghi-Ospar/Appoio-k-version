@@ -120,10 +120,12 @@ const Login = () => {
         .from("cadastros")
         .select("nome_completo, senha")
         .ilike("nome_completo", nome.trim())
+        .limit(1)
         .maybeSingle();
 
       if (erroUsuario) {
-        setErro("Erro ao fazer login. Tente novamente.");
+        console.error("Erro Supabase login:", erroUsuario);
+        setErro(`Erro ao fazer login: ${erroUsuario.message || "Tente novamente."}`);
         return;
       }
 
@@ -139,8 +141,9 @@ const Login = () => {
 
       localStorage.setItem("usuario_nome", usuario.nome_completo);
       navigate("/tela-inicial");
-    } catch {
-      setErro("Houve um erro de conexão. Verifique sua internet e tente novamente.");
+    } catch (err: any) {
+      console.error("Erro conexão login:", err);
+      setErro(`Houve um erro de conexão: ${err?.message || "Verifique sua internet e tente novamente."}`);
     } finally {
       setCarregando(false);
     }

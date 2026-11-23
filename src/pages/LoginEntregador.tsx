@@ -120,10 +120,12 @@ const LoginEntregador = () => {
         .from("cadastros")
         .select("nome_completo, senha")
         .ilike("nome_completo", nome.trim())
+        .limit(1)
         .maybeSingle();
 
       if (erroEntregador) {
-        setErro("Erro ao fazer login. Tente novamente.");
+        console.error("Erro Supabase login entregador:", erroEntregador);
+        setErro(`Erro ao fazer login: ${erroEntregador.message || "Tente novamente."}`);
         return;
       }
 
@@ -139,8 +141,9 @@ const LoginEntregador = () => {
 
       localStorage.setItem("entregador_nome", entregador.nome_completo);
       navigate("/tela-entregas");
-    } catch {
-      setErro("Houve um erro de conexão. Verifique sua internet e tente novamente.");
+    } catch (err: any) {
+      console.error("Erro conexão login entregador:", err);
+      setErro(`Houve um erro de conexão: ${err?.message || "Verifique sua internet e tente novamente."}`);
     } finally {
       setCarregando(false);
     }
