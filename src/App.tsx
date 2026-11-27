@@ -11,6 +11,7 @@ import EsqueciSenha from "./pages/EsqueciSenha";
 import Welcome from "./pages/Welcome";
 import LoginEntregador from "./pages/LoginEntregador";
 import TelaEntregas from "./pages/TelaEntregas";
+import TelaAdmin from "./pages/TelaAdmin";
 import NotFound from "./pages/NotFound";
 import AtualizacaoDialog from "@/components/AtualizacaoDialog";
 import { DownloadProgresso } from "@/components/DownloadProgresso";
@@ -33,6 +34,7 @@ const AnimatedRoutes = () => {
                 <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
         <Route path="/tela-inicial" element={<Index />} />
+        <Route path="/tela-admin" element={<TelaAdmin />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
