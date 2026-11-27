@@ -154,7 +154,7 @@ export const useAtualizacoes = (versaoAtual: string) => {
         path: nomeArquivo,
         data: base64,
         directory: Directory.Documents,
-        encoding: Encoding.Utf8,
+        encoding: Encoding.UTF8,
       });
 
       setEstado((prev) => ({ ...prev, status: "pronto", progresso: 100 }));
