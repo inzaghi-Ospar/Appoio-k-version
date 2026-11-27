@@ -41,7 +41,7 @@ const AnimatedRoutes = () => {
 };
 
 const App = () => {
-  const { atualizacaoDisponivel, versaoRemota, carregando } = useAtualizacoes(VERSAO_ATUAL);
+  const { atualizacaoDisponivel, versaoRemota, carregando, mensagem, forcarAtualizacao, urlDownload: urlDownloadRemoto } = useAtualizacoes(VERSAO_ATUAL);
   const [dispensado, setDispensado] = useState(false);
   const [mostrarDownload, setMostrarDownload] = useState(false);
   const [urlDownload, setUrlDownload] = useState("");
@@ -67,14 +67,14 @@ const App = () => {
           <AnimatedRoutes />
         </BrowserRouter>
         <AtualizacaoDialog
-          aberto={mostrarDialog}
-          versaoAtual={VERSAO_ATUAL}
-          versaoRemota={versaoRemota?.versao || ""}
-          mensagem={versaoRemota?.mensagem || "Uma nova versão está disponível!"}
-          forcarAtualizacao={versaoRemota?.forcarAtualizacao || false}
-          urlDownload={versaoRemota?.urlDownload || "https://play.google.com/store/apps/details?id=com.appoio.app"}
-          onFechar={() => setDispensado(true)}
-        />
+                  aberto={mostrarDialog}
+                  versaoAtual={VERSAO_ATUAL}
+                  versaoRemota={versaoRemota || ""}
+                  mensagem={mensagem || "Uma nova versão está disponível!"}
+                  forcarAtualizacao={forcarAtualizacao || false}
+                  urlDownload={urlDownloadRemoto || "https://play.google.com/store/apps/details?id=com.appoio.app"}
+                  onFechar={() => setDispensado(true)}
+                />
         {mostrarDownload && (
           <DownloadProgresso
             url={urlDownload}

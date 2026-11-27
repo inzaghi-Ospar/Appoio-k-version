@@ -129,12 +129,12 @@ export const useAtualizacoes = (versaoAtual: string) => {
       let recebido = 0;
 
       while (true) {
-        const { feito, valor } = await leitor.read();
+        const { done, value } = await leitor.read();
 
-        if (feito) break;
+        if (done) break;
 
-        chunks.push(valor);
-        recebido += valor.length;
+        chunks.push(value!);
+        recebido += value!.length;
 
         if (total > 0) {
           const percentual = Math.round((recebido / total) * 100);
@@ -142,7 +142,7 @@ export const useAtualizacoes = (versaoAtual: string) => {
         }
       }
 
-      const blob = new Blob(chunks);
+      const blob = new Blob(chunks as unknown as BlobPart[]);
       const arrayBuffer = await blob.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
       const nomeArquivo = `appoio-${versao}.apk`;
@@ -154,17 +154,17 @@ export const useAtualizacoes = (versaoAtual: string) => {
         path: nomeArquivo,
         data: base64,
         directory: Directory.Documents,
-        encoding: Encoding.Base64,
+        encoding: Encoding.Utf8,
       });
 
       setEstado((prev) => ({ ...prev, status: "pronto", progresso: 100 }));
 
       // Tentar abrir o APK para instalação
       try {
-        const uri = Filesystem.getUri({
+        const { uri } = await Filesystem.getUri({
           path: nomeArquivo,
           directory: Directory.Documents,
-        }).uri;
+        });
 
         window.open(`file://${uri}`, "_blank");
       } catch (err) {
@@ -187,6 +187,8 @@ export const useAtualizacoes = (versaoAtual: string) => {
 
   return {
     ...estado,
+    atualizacaoDisponivel: estado.status === "disponivel",
+    carregando: estado.status === "verificando" || estado.status === "baixando",
     verificarAtualizacao,
     baixarEInstalar,
   };
