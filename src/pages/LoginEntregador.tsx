@@ -436,13 +436,12 @@ const LoginEntregador = () => {
                                       Código
                                     </label>
                                     <Input
-                                      id="codigo"
-                                      type="number"
-                                      value={codigoDigitado}
-                                      onChange={(e) => setCodigoDigitado(e.target.value)}
-                                      maxLength="20"
-                                      className={mensagemErroCodigo ? "border-destructive" : ""}
-                                    />
+                                                                          id="codigo"
+                                                                          value={codigoDigitado}
+                                                                          onChange={(e) => setCodigoDigitado(e.target.value)}
+                                                                          maxLength={20}
+                                                                          className={mensagemErroCodigo ? "border-destructive" : ""}
+                                                                        />
                                     {mensagemErroCodigo && (
                                       <p className="text-sm text-destructive mt-2">{mensagemErroCodigo}</p>
                                     )}
