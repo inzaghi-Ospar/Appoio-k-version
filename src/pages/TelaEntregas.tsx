@@ -26,7 +26,7 @@ const LIMITE_LISTA = 20;
 
 const TelaEntregas = () => {
   const navigate = useNavigate();
-  const [usuario, setUsuario] = useState<{ id: string; nome_completo: string; email: string; tipo_usuario: string } | null>(null);
+  const [usuario, setUsuario] = useState<{ id: string; nome_completo: string; email: string; tipo_usuario: "cliente" | "entregador" } | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<Aba>("pendentes");
   const [pendentes, setPendentes] = useState<any[]>([]);
   const [pendentesPagina, setPendentesPagina] = useState(LIMITE_LISTA);

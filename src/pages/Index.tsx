@@ -24,7 +24,7 @@ const LIMITE_LISTA = 20;
 
 const Index = () => {
   const navigate = useNavigate();
-  const [usuario, setUsuario] = useState<{ id: string; nome_completo: string; email: string; tipo_usuario: string } | null>(null);
+  const [usuario, setUsuario] = useState<{ id: string; nome_completo: string; email: string; tipo_usuario: "cliente" | "entregador" } | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<Aba>("inicio");
   const [encomendas, setEncomendas] = useState<any[]>([]);
   const [encomendasPagina, setEncomendasPagina] = useState(LIMITE_LISTA);
