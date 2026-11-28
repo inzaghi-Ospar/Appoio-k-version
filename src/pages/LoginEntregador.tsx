@@ -9,43 +9,29 @@ import { formatarCpf } from "@/lib/format";
 
 const LoginEntregador = () => {
   const navigate = useNavigate();
-  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [modoBuscaCpf, setModoBuscaCpf] = useState(false);
   const [cpfBusca, setCpfBusca] = useState("");
-  const [entregadorEncontradoCpf, setEntregadorEncontradoCpf] = useState<{ nome_completo: string; senha: string } | null>(null);
+  const [entregadorEncontradoCpf, setEntregadorEncontradoCpf] = useState<{ nome_completo: string } | null>(null);
   const [buscandoCpf, setBuscandoCpf] = useState(false);
-    const [cliquesIcone, setCliquesIcone] = useState(0);
-    const [mostrarPopupAdmin, setMostrarPopupAdmin] = useState(false);
-    const [codigoDigitado, setCodigoDigitado] = useState("");
-    const [mensagemErroCodigo, setMensagemErroCodigo] = useState("");
-  
-    useEffect(() => {
-    window.history.pushState({ appoio: true }, "", window.location.href);
-
-    const handlePopState = () => {
-      window.close();
-      window.history.pushState({ appoio: true }, "", window.location.href);
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
 
   useEffect(() => {
-    const entregadorSalvo = localStorage.getItem("entregador_nome");
-    if (entregadorSalvo) {
-      navigate("/tela-entregas");
-    }
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        navigate("/tela-entregas");
+      }
+    });
+    return () => data.subscription.unsubscribe();
   }, [navigate]);
 
   const copiarNome = () => {
     if (entregadorEncontradoCpf) {
       navigator.clipboard.writeText(entregadorEncontradoCpf.nome_completo);
-      setNome(entregadorEncontradoCpf.nome_completo);
+      setEmail(entregadorEncontradoCpf.nome_completo);
       setModoBuscaCpf(false);
       setEntregadorEncontradoCpf(null);
       setCpfBusca("");
@@ -70,26 +56,25 @@ const LoginEntregador = () => {
     setErro("");
 
     try {
-      let { data: entregador, error } = await supabase
+      const { data: entregador, error } = await supabase
         .from("cadastros")
-        .select("nome_completo, senha, cpf")
+        .select("nome_completo, cpf")
         .eq("cpf", digitosCpf)
         .maybeSingle();
-
-      if (!entregador && !error) {
-        const cpfFormatado = formatarCpf(digitosCpf);
-        const resultado = await supabase
-          .from("cadastros")
-          .select("nome_completo, senha, cpf")
-          .eq("cpf", cpfFormatado)
-          .maybeSingle();
-        entregador = resultado.data;
-        error = resultado.error;
-      }
 
       if (error) {
         setErro("Erro ao buscar por CPF. Tente novamente.");
         return;
+      }
+
+      if (!entregador) {
+        const cpfFormatado = formatarCpf(digitosCpf);
+        const resultado = await supabase
+          .from("cadastros")
+          .select("nome_completo, cpf")
+          .eq("cpf", cpfFormatado)
+          .maybeSingle();
+        entregador = resultado.data;
       }
 
       if (!entregador) {
@@ -112,30 +97,16 @@ const LoginEntregador = () => {
     setCarregando(true);
 
     try {
-      const { data: entregador, error: erroEntregador } = await supabase
-        .from("cadastros")
-        .select("nome_completo, senha")
-        .ilike("nome_completo", nome.trim())
-        .limit(1)
-        .maybeSingle();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: senha,
+      });
 
-      if (erroEntregador) {
-        console.error("Erro Supabase login entregador:", erroEntregador);
-        setErro(`Erro ao fazer login: ${erroEntregador.message || "Tente novamente."}`);
+      if (error) {
+        setErro("Email ou senha incorretos.");
         return;
       }
 
-      if (!entregador) {
-        setErro("Entregador não encontrado.");
-        return;
-      }
-
-      if (entregador.senha !== senha.trim()) {
-        setErro("Senha incorreta.");
-        return;
-      }
-
-      localStorage.setItem("entregador_nome", entregador.nome_completo);
       navigate("/tela-entregas");
     } catch (err: any) {
       console.error("Erro conexão login entregador:", err);
@@ -143,45 +114,6 @@ const LoginEntregador = () => {
     } finally {
       setCarregando(false);
     }
-  };
-
-  const handleCliqueIcone = () => {
-    const novoTotal = cliquesIcone + 1;
-    if (novoTotal >= 10) {
-      setCliquesIcone(0);
-      setMostrarPopupAdmin(true);
-      setCodigoDigitado("");
-      setMensagemErroCodigo("");
-    } else {
-      setCliquesIcone(novoTotal);
-    }
-  };
-
-  const verificarCodigoAdmin = async () => {
-    if (codigoDigitado === "0127183876116669674759") {
-      setMostrarPopupAdmin(false);
-      setCodigoDigitado("");
-      setMensagemErroCodigo("");
-      navigate("/tela-admin");
-      return;
-    }
-
-    const usuarioLogado =
-      localStorage.getItem("usuario_nome") ||
-      localStorage.getItem("entregador_nome") ||
-      "Desconhecido";
-
-    try {
-      await supabase.from("admin_tentativas").insert({
-        usuario_nome_falhou: usuarioLogado,
-        dispositivo_id: navigator.userAgent,
-      });
-    } catch (err) {
-      console.error("Erro ao registrar tentativa:", err);
-    }
-
-    setMensagemErroCodigo("Código incorreto.");
-    setCodigoDigitado("");
   };
 
   return (
@@ -274,12 +206,13 @@ const LoginEntregador = () => {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="nome">Nome</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="nome"
-                  placeholder="Digite seu nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="Digite seu email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
 
@@ -318,7 +251,7 @@ const LoginEntregador = () => {
         ) : (
           <>
             <div className="text-center mb-5">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-3 cursor-pointer hover:bg-indigo-200 transition-colors" onClick={handleCliqueIcone}>
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-3">
                 <Package className="w-6 h-6" />
               </div>
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
@@ -330,30 +263,16 @@ const LoginEntregador = () => {
             </div>
 
             <form className="space-y-3" onSubmit={handleSubmit}>
-              {erro && (
-                <div className="space-y-2">
-                  <p className="text-sm text-destructive text-center">{erro}</p>
-                  {erro === "Entregador não encontrado." && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full rounded-full"
-                      onClick={() => setModoBuscaCpf(true)}
-                    >
-                      <Search className="w-4 h-4 mr-2" />
-                      Tentar login com CPF?
-                    </Button>
-                  )}
-                </div>
-              )}
+              {erro && <p className="text-sm text-destructive text-center">{erro}</p>}
 
               <div className="space-y-1.5">
-                <Label htmlFor="nome">Nome</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="nome"
-                  placeholder="Digite seu nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="Digite seu email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
 
@@ -408,70 +327,19 @@ const LoginEntregador = () => {
               </div>
 
               <Button
-                              type="button"
-                              variant="ghost"
-                              className="w-full text-sm text-slate-500 hover:text-slate-800"
-                              onClick={() => navigate("/esqueci-senha")}
-                            >
-                              Esqueceu sua senha?
-                            </Button>
-                          </form>
-                          {mostrarPopupAdmin && (
-                            <div
-                              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-                            >
-                              <div
-                                className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-md mx-auto"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <h2 className="text-xl font-bold text-slate-900 mb-4">
-                                  Acesso ao Admin
-                                </h2>
-                                <p className="text-sm text-slate-500 mb-6">
-                                  Digite o código numérico para acessar o painel administrativo:
-                                </p>
-                                <div className="space-y-4">
-                                  <div>
-                                    <label htmlFor="codigo" className="block text-sm font-medium text-slate-700 mb-2">
-                                      Código
-                                    </label>
-                                    <Input
-                                                                          id="codigo"
-                                                                          value={codigoDigitado}
-                                                                          onChange={(e) => setCodigoDigitado(e.target.value)}
-                                                                          maxLength={20}
-                                                                          className={mensagemErroCodigo ? "border-destructive" : ""}
-                                                                        />
-                                    {mensagemErroCodigo && (
-                                      <p className="text-sm text-destructive mt-2">{mensagemErroCodigo}</p>
-                                    )}
-                                  </div>
-                                  <div className="flex gap-3">
-                                    <Button
-                                      type="button"
-                                      onClick={verificarCodigoAdmin}
-                                      className="flex-1 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                      disabled={!codigoDigitado}
-                                    >
-                                      Confirmar
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      onClick={() => setMostrarPopupAdmin(false)}
-                                      className="flex-1 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                      Cancelar
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
+                type="button"
+                variant="ghost"
+                className="w-full text-sm text-slate-500 hover:text-slate-800"
+                onClick={() => navigate("/esqueci-senha")}
+              >
+                Esqueceu sua senha?
+              </Button>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default LoginEntregador;

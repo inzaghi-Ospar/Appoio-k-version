@@ -12,16 +12,17 @@ const Cadastro = () => {
   const [nomeCompleto, setNomeCompleto] = useState("");
   const [telefone, setTelefone] = useState("");
   const [cpf, setCpf] = useState("");
+  const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [erroNome, setErroNome] = useState("");
   const [erroTelefone, setErroTelefone] = useState("");
   const [erroCpf, setErroCpf] = useState("");
+  const [erroEmail, setErroEmail] = useState("");
   const [erroSenha, setErroSenha] = useState("");
   const [erroConfirmarSenha, setErroConfirmarSenha] = useState("");
   const [erroGeral, setErroGeral] = useState("");
   const [carregando, setCarregando] = useState(false);
-  const [tipoUsuario, setTipoUsuario] = useState<string>("");
   const [tipoUsuarioSelecionado, setTipoUsuarioSelecionado] = useState<"cliente" | "entregador" | "">("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,6 +54,13 @@ const Cadastro = () => {
       setErroCpf("");
     }
 
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setErroEmail("Email inválido.");
+      temErro = true;
+    } else {
+      setErroEmail("");
+    }
+
     if (senha.length < 4) {
       setErroSenha("A senha deve ter no mínimo 4 caracteres.");
       setErroConfirmarSenha("");
@@ -79,55 +87,28 @@ const Cadastro = () => {
     setCarregando(true);
 
     try {
-      const { data: cpfExistente, error: erroConsultaCpf } = await supabase
-        .from("cadastros")
-        .select("id")
-        .eq("cpf", digitosCpf)
-        .maybeSingle();
+      const { error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: senha,
+        options: {
+          data: {
+            nome_completo: nomeCompleto.trim(),
+            telefone: telefone.replace(/\D/g, ""),
+            cpf: cpf.replace(/\D/g, ""),
+            tipo_usuario: tipoUsuarioSelecionado,
+          },
+        },
+      });
 
-      if (erroConsultaCpf) {
-        setErroGeral("Erro ao verificar cadastro. Tente novamente.");
+      if (error) {
+        console.error("Erro Supabase signup:", error);
+        setErroGeral(error.message || "Erro ao criar cadastro");
         return;
       }
-
-      const { data: nomeExistente, error: erroConsultaNome } = await supabase
-        .from("cadastros")
-        .select("id")
-        .ilike("nome_completo", nomeCompleto.trim())
-        .maybeSingle();
-
-      if (erroConsultaNome) {
-        setErroGeral("Erro ao verificar cadastro. Tente novamente.");
-        return;
-      }
-
-      if (cpfExistente) {
-        setErroCpf("Já existe um cadastro com este CPF.");
-      }
-      if (nomeExistente) {
-        setErroNome("Já existe um cadastro com este nome.");
-      }
-      if (cpfExistente || nomeExistente) {
-        return;
-      }
-
-      const { error: erroInsercao } = await supabase.from("cadastros").insert({
-              nome_completo: nomeCompleto.trim(),
-              telefone: telefone.replace(/\D/g, ""),
-              cpf: cpf.replace(/\D/g, ""),
-              senha,
-              tipo_usuario: tipoUsuarioSelecionado,
-            });
-      
-            if (erroInsercao) {
-              console.error("Erro Supabase:", erroInsercao);
-              setErroGeral(`Erro: ${erroInsercao.message || "Erro ao criar cadastro"}`);
-              return;
-            }
 
       navigate("/login");
-    } catch {
-      setErroGeral("Erro inesperado. Tente novamente.");
+    } catch (err: any) {
+      setErroGeral(err?.message || "Erro inesperado. Tente novamente.");
     } finally {
       setCarregando(false);
     }
@@ -175,6 +156,22 @@ const Cadastro = () => {
               className={erroNome ? "border-destructive" : ""}
             />
             {erroNome && <p className="text-sm text-destructive">{erroNome}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setErroEmail("");
+              }}
+              className={erroEmail ? "border-destructive" : ""}
+            />
+            {erroEmail && <p className="text-sm text-destructive">{erroEmail}</p>}
           </div>
 
           <div className="space-y-2">

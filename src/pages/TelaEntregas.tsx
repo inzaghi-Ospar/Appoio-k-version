@@ -12,6 +12,7 @@ import {
   X,
   Trash2,
   Clock,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,7 @@ const LIMITE_LISTA = 20;
 
 const TelaEntregas = () => {
   const navigate = useNavigate();
-  const [nome, setNome] = useState("");
+  const [usuario, setUsuario] = useState<{ id: string; nome_completo: string; email: string; tipo_usuario: string } | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<Aba>("pendentes");
   const [pendentes, setPendentes] = useState<any[]>([]);
   const [pendentesPagina, setPendentesPagina] = useState(LIMITE_LISTA);
@@ -43,16 +44,23 @@ const TelaEntregas = () => {
   const [nomesSelecionados, setNomesSelecionados] = useState<string[]>([]);
 
   useEffect(() => {
-    const nomeSalvo = localStorage.getItem("entregador_nome");
-    if (nomeSalvo) {
-      setNome(nomeSalvo);
-      carregarDados();
-    } else {
-      navigate("/login-entregador");
-    }
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const user = session.user;
+        setUsuario({
+          id: user.id,
+          nome_completo: user.user_metadata?.nome_completo || user.email || "Entregador",
+          email: user.email || "",
+          tipo_usuario: user.user_metadata?.tipo_usuario || "entregador",
+        });
+      } else {
+        setUsuario(null);
+        navigate("/login-entregador");
+      }
+    });
+    return () => data.subscription.unsubscribe();
   }, [navigate]);
 
-  // Revoga URL do objeto quando o componente desmonta ou troca a foto
   useEffect(() => {
     return () => {
       if (fotoUrl) {
@@ -62,11 +70,12 @@ const TelaEntregas = () => {
   }, [fotoUrl]);
 
   const carregarPendentes = async () => {
+    if (!usuario) return;
     try {
       const { data, error } = await supabase
         .from("encomendas")
         .select("*")
-        .eq("nome_entregador", nome)
+        .eq("user_id", usuario.id)
         .in("status", ["pronta", "aguardando_confirmacao"])
         .order("created_at", { ascending: false });
 
@@ -82,11 +91,12 @@ const TelaEntregas = () => {
   };
 
   const carregarHistorico = async () => {
+    if (!usuario) return;
     try {
       const { data, error } = await supabase
         .from("encomendas")
         .select("*")
-        .eq("nome_entregador", nome)
+        .eq("user_id", usuario.id)
         .eq("status", "retirada")
         .order("retirado_em", { ascending: false });
 
@@ -107,11 +117,16 @@ const TelaEntregas = () => {
     setCarregando(false);
   };
 
+  useEffect(() => {
+    if (usuario) {
+      carregarDados();
+    }
+  }, [usuario]);
+
   const buscarNomesCadastro = (e: ChangeEvent<HTMLInputElement>) => {
     setNomeBusca(e.target.value);
   };
 
-  // Debounce: evita requisições Supabase a cada tecla digitada
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (!nomeBusca || nomeBusca.length < 2) {
@@ -168,12 +183,15 @@ const TelaEntregas = () => {
       return;
     }
 
+    if (!usuario) return;
+
     try {
       for (const nomeDestinatario of nomesSelecionados) {
         const { error } = await supabase.from("encomendas").insert({
           codigo: `ENV-${Date.now()}`,
           nome_destinatario: nomeDestinatario,
-          nome_entregador: nome,
+          nome_entregador: usuario.nome_completo,
+          user_id: usuario.id,
           status: "pronta",
         });
 
@@ -208,7 +226,7 @@ const TelaEntregas = () => {
       }
 
       setPendentes(pendentes.filter((e) => e.id !== id));
-      if (nome) carregarDados();
+      if (usuario) carregarDados();
     } catch {
       alert("Erro de conexão. Verifique sua internet e tente novamente.");
     }
@@ -227,8 +245,8 @@ const TelaEntregas = () => {
     setFotoPerfil(objectUrl);
   };
 
-  const sair = () => {
-    localStorage.removeItem("entregador_nome");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     navigate("/login-entregador");
   };
 
@@ -241,7 +259,7 @@ const TelaEntregas = () => {
             onClick={() => setMostrarConfirmacaoLogout(true)}
             className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <LogOut className="w-4 h-4" />
             Sair
           </button>
         </div>
@@ -411,14 +429,14 @@ const TelaEntregas = () => {
                   </label>
                 </div>
                 <p className="text-sm text-slate-500 mt-3">
-                  {nome || "Entregador"}
+                  {usuario?.nome_completo || "Entregador"}
                 </p>
                 <p className="text-xs text-slate-400">
-                  Entregador
+                  {usuario?.email}
                 </p>
                 <ReportarProblema
-                  usuarioNome={nome || "Entregador"}
-                  usuarioTipo="entregador"
+                  usuarioNome={usuario?.nome_completo || "Entregador"}
+                  usuarioTipo={usuario?.tipo_usuario || "entregador"}
                 />
               </div>
             </div>
@@ -620,11 +638,7 @@ const TelaEntregas = () => {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  localStorage.removeItem("entregador_nome");
-                  setMostrarConfirmacaoLogout(false);
-                  navigate("/login-entregador");
-                }}
+                onClick={handleLogout}
                 className="flex-1 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
               >
                 Sim, sair

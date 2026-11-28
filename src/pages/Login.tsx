@@ -9,39 +9,29 @@ import { formatarCpf } from "@/lib/format";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [modoBuscaCpf, setModoBuscaCpf] = useState(false);
   const [cpfBusca, setCpfBusca] = useState("");
-  const [usuarioEncontradoCpf, setUsuarioEncontradoCpf] = useState<{ nome_completo: string; senha: string } | null>(null);
+  const [usuarioEncontradoCpf, setUsuarioEncontradoCpf] = useState<{ nome_completo: string } | null>(null);
   const [buscandoCpf, setBuscandoCpf] = useState(false);
 
   useEffect(() => {
-    window.history.pushState({ appoio: true }, "", window.location.href);
-
-    const handlePopState = () => {
-      window.close();
-      window.history.pushState({ appoio: true }, "", window.location.href);
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
-
-  useEffect(() => {
-    const usuarioSalvo = localStorage.getItem("usuario_nome");
-    if (usuarioSalvo) {
-      navigate("/tela-inicial");
-    }
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        navigate("/tela-inicial");
+      }
+    });
+    return () => data.subscription.unsubscribe();
   }, [navigate]);
 
   const copiarNome = () => {
     if (usuarioEncontradoCpf) {
       navigator.clipboard.writeText(usuarioEncontradoCpf.nome_completo);
-      setNome(usuarioEncontradoCpf.nome_completo);
+      setEmail(usuarioEncontradoCpf.nome_completo);
       setModoBuscaCpf(false);
       setUsuarioEncontradoCpf(null);
       setCpfBusca("");
@@ -66,26 +56,25 @@ const Login = () => {
     setErro("");
 
     try {
-      let { data: usuario, error } = await supabase
+      const { data: usuario, error } = await supabase
         .from("cadastros")
-        .select("nome_completo, senha, cpf")
+        .select("nome_completo, cpf")
         .eq("cpf", digitosCpf)
         .maybeSingle();
-
-      if (!usuario && !error) {
-        const cpfFormatado = formatarCpf(digitosCpf);
-        const resultado = await supabase
-          .from("cadastros")
-          .select("nome_completo, senha, cpf")
-          .eq("cpf", cpfFormatado)
-          .maybeSingle();
-        usuario = resultado.data;
-        error = resultado.error;
-      }
 
       if (error) {
         setErro("Erro ao buscar por CPF. Tente novamente.");
         return;
+      }
+
+      if (!usuario) {
+        const cpfFormatado = formatarCpf(digitosCpf);
+        const resultado = await supabase
+          .from("cadastros")
+          .select("nome_completo, cpf")
+          .eq("cpf", cpfFormatado)
+          .maybeSingle();
+        usuario = resultado.data;
       }
 
       if (!usuario) {
@@ -108,30 +97,16 @@ const Login = () => {
     setCarregando(true);
 
     try {
-      const { data: usuario, error: erroUsuario } = await supabase
-        .from("cadastros")
-        .select("nome_completo, senha")
-        .ilike("nome_completo", nome.trim())
-        .limit(1)
-        .maybeSingle();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: senha,
+      });
 
-      if (erroUsuario) {
-        console.error("Erro Supabase login:", erroUsuario);
-        setErro(`Erro ao fazer login: ${erroUsuario.message || "Tente novamente."}`);
+      if (error) {
+        setErro("Email ou senha incorretos.");
         return;
       }
 
-      if (!usuario) {
-        setErro("Usuário não encontrado.");
-        return;
-      }
-
-      if (usuario.senha !== senha.trim()) {
-        setErro("Senha incorreta.");
-        return;
-      }
-
-      localStorage.setItem("usuario_nome", usuario.nome_completo);
       navigate("/tela-inicial");
     } catch (err: any) {
       console.error("Erro conexão login:", err);
@@ -231,12 +206,13 @@ const Login = () => {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="nome">Nome</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="nome"
-                  placeholder="Digite seu nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="Digite seu email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
 
@@ -287,30 +263,16 @@ const Login = () => {
             </div>
 
             <form className="space-y-3" onSubmit={handleSubmit}>
-              {erro && (
-                <div className="space-y-2">
-                  <p className="text-sm text-destructive text-center">{erro}</p>
-                  {erro === "Usuário não encontrado." && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full rounded-full"
-                      onClick={() => setModoBuscaCpf(true)}
-                    >
-                      <Search className="w-4 h-4 mr-2" />
-                      Tentar login com CPF?
-                    </Button>
-                  )}
-                </div>
-              )}
+              {erro && <p className="text-sm text-destructive text-center">{erro}</p>}
 
               <div className="space-y-1.5">
-                <Label htmlFor="nome">Nome</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="nome"
-                  placeholder="Digite seu nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="Digite seu email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
 
@@ -355,13 +317,13 @@ const Login = () => {
                   Cadastrar
                 </Button>
                 <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="rounded-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-                                  onClick={() => navigate("/login-entregador")}
-                                >
-                                  Login Entregador
-                                </Button>
+                  type="button"
+                  variant="outline"
+                  className="rounded-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                  onClick={() => navigate("/login-entregador")}
+                >
+                  Login Entregador
+                </Button>
               </div>
 
               <Button

@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Clock,
   Camera,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,21 +24,11 @@ const LIMITE_LISTA = 20;
 
 const Index = () => {
   const navigate = useNavigate();
-  const [usuarioNome, setUsuarioNome] = useState("");
+  const [usuario, setUsuario] = useState<{ id: string; nome_completo: string; email: string; tipo_usuario: string } | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<Aba>("inicio");
   const [encomendas, setEncomendas] = useState<any[]>([]);
   const [encomendasPagina, setEncomendasPagina] = useState(LIMITE_LISTA);
-  const [historico, setHistorico] = useState<any[]>([
-    {
-      id: "sim-1",
-      nome_entregador: "Carlos Pereira",
-      nome_destinatario: "João Silva Santos",
-      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      retirado_em: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      retirado_por: "João Silva Santos",
-      status: "retirada",
-    },
-  ]);
+  const [historico, setHistorico] = useState<any[]>([]);
   const [historicoPagina, setHistoricoPagina] = useState(LIMITE_LISTA);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -46,16 +37,23 @@ const Index = () => {
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const nomeSalvo = localStorage.getItem("usuario_nome");
-    if (nomeSalvo) {
-      setUsuarioNome(nomeSalvo);
-    } else {
-      setUsuarioNome("Usuário Teste");
-      localStorage.setItem("usuario_nome", "Usuário Teste");
-    }
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const user = session.user;
+        setUsuario({
+          id: user.id,
+          nome_completo: user.user_metadata?.nome_completo || user.email || "Usuário",
+          email: user.email || "",
+          tipo_usuario: user.user_metadata?.tipo_usuario || "cliente",
+        });
+      } else {
+        setUsuario(null);
+        navigate("/login");
+      }
+    });
+    return () => data.subscription.unsubscribe();
   }, [navigate]);
 
-  // Revoga URL do objeto quando o componente desmonta ou troca a foto
   useEffect(() => {
     return () => {
       if (fotoUrl) {
@@ -64,34 +62,35 @@ const Index = () => {
     };
   }, [fotoUrl]);
 
-  useEffect(() => {
-    const carregarEncomendas = async () => {
-      setCarregando(true);
-      setErro("");
+  const carregarEncomendas = async () => {
+    if (!usuario) return;
+    setCarregando(true);
+    setErro("");
 
-      try {
-        const { data, error } = await supabase
-          .from("encomendas")
-          .select("*")
-          .eq("status", "pronta")
-          .eq("nome_destinatario", usuarioNome)
-          .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("encomendas")
+        .select("*")
+        .eq("status", "pronta")
+        .eq("user_id", usuario.id)
+        .order("created_at", { ascending: false });
 
-        if (error) {
-          setErro("Erro ao carregar encomendas. Tente novamente.");
-          return;
-        }
-
-        if (data) {
-          setEncomendas(data);
-        }
-      } catch {
+      if (error) {
         setErro("Erro ao carregar encomendas. Tente novamente.");
-      } finally {
-        setCarregando(false);
+        return;
       }
-    };
 
+      if (data) {
+        setEncomendas(data);
+      }
+    } catch {
+      setErro("Erro ao carregar encomendas. Tente novamente.");
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  useEffect(() => {
     carregarEncomendas();
 
     let intervalo: ReturnType<typeof setInterval>;
@@ -120,16 +119,17 @@ const Index = () => {
       clearInterval(intervalo);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, []);
+  }, [usuario]);
 
   useEffect(() => {
     const carregarHistorico = async () => {
+      if (!usuario) return;
       try {
         const { data, error } = await supabase
           .from("encomendas")
           .select("*")
           .eq("status", "retirada")
-          .eq("nome_destinatario", usuarioNome)
+          .eq("user_id", usuario.id)
           .order("retirado_em", { ascending: false });
 
         if (error) return;
@@ -137,12 +137,12 @@ const Index = () => {
           setHistorico(data);
         }
       } catch {
-        // mantém o histórico simulado
+        // mantém o histórico vazio
       }
     };
 
     carregarHistorico();
-  }, []);
+  }, [usuario]);
 
   const handleFotoPerfil = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -157,6 +157,11 @@ const Index = () => {
     setFotoPerfil(objectUrl);
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
   return (
     <div className="min-h-screen bg-[#F4F1EC] pb-16">
       <div className="w-full max-w-sm mx-auto">
@@ -166,7 +171,7 @@ const Index = () => {
             onClick={() => setMostrarConfirmacaoLogout(true)}
             className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <LogOut className="w-4 h-4" />
             Sair
           </button>
         </div>
@@ -176,7 +181,7 @@ const Index = () => {
             <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
               <h2 className="text-sm font-medium text-slate-500 mb-1">Usuário</h2>
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                {usuarioNome || "Visitante"}
+                {usuario?.nome_completo || "Carregando..."}
               </h1>
             </div>
           )}
@@ -349,16 +354,16 @@ const Index = () => {
                   </label>
                 </div>
                 <p className="text-sm text-slate-500 mt-3">
-                  {usuarioNome || "Visitante"}
+                  {usuario?.nome_completo || "Carregando..."}
                 </p>
                 <p className="text-xs text-slate-400">
-                  Usuário de teste para demonstração
+                  {usuario?.email}
                 </p>
               </div>
               <div className="mt-6">
                 <ReportarProblema
-                  usuarioNome={usuarioNome || "Visitante"}
-                  usuarioTipo="cliente"
+                  usuarioNome={usuario?.nome_completo || "Usuário"}
+                  usuarioTipo={usuario?.tipo_usuario || "cliente"}
                 />
               </div>
             </div>
@@ -407,11 +412,7 @@ const Index = () => {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  localStorage.removeItem("usuario_nome");
-                  setMostrarConfirmacaoLogout(false);
-                  navigate("/login");
-                }}
+                onClick={handleLogout}
                 className="flex-1 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
               >
                 Sim, sair

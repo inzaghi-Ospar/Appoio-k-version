@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 const Index = lazy(() => import("./pages/Index"));
 const Login = lazy(() => import("./pages/Login"));
 const Cadastro = lazy(() => import("./pages/Cadastro"));
@@ -12,6 +12,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 import AtualizacaoDialog from "@/components/AtualizacaoDialog";
 import { DownloadProgresso } from "@/components/DownloadProgresso";
 import { useAtualizacoes } from "@/hooks/use-atualizacoes";
+import { supabase } from "@/integrations/supabase/client";
 
 const VERSAO_ATUAL = "0.1.0";
 
@@ -21,28 +22,40 @@ const AnimatedRoutes = () => {
   return (
     <div className="animate-page">
       <Suspense fallback={<div>Carregando...</div>}>
-      <Routes location={location}>
-        <Route path="/" element={<Welcome />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/login-entregador" element={<LoginEntregador />} />
-        <Route path="/tela-entregas" element={<TelaEntregas />} />
-        <Route path="/cadastro" element={<Cadastro />} />
-        <Route path="/esqueci-senha" element={<EsqueciSenha />} />
-        <Route path="/tela-inicial" element={<Index />} />
-        <Route path="/tela-admin" element={<TelaAdmin />} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+        <Routes location={location}>
+          <Route path="/" element={<Welcome />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/login-entregador" element={<LoginEntregador />} />
+          <Route path="/tela-entregas" element={<TelaEntregas />} />
+          <Route path="/cadastro" element={<Cadastro />} />
+          <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+          <Route path="/tela-inicial" element={<Index />} />
+          <Route path="/tela-admin" element={<TelaAdmin />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </Suspense>
     </div>
   );
 };
 
 const App = () => {
+  const navigate = useNavigate();
   const { atualizacaoDisponivel, versaoRemota, carregando, mensagem, forcarAtualizacao, urlDownload: urlDownloadRemoto } = useAtualizacoes(VERSAO_ATUAL);
   const [dispensado, setDispensado] = useState(false);
   const [mostrarDownload, setMostrarDownload] = useState(false);
   const [urlDownload, setUrlDownload] = useState("");
+
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        navigate("/tela-inicial");
+      } else {
+        navigate("/login");
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, [navigate]);
 
   const mostrarDialog =
     !carregando && atualizacaoDisponivel && !dispensado;
