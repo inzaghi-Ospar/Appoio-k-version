@@ -18,6 +18,19 @@ const VERSAO_ATUAL = "0.1.0";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Navigate based on auth state change
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        navigate("/tela-inicial");
+      } else {
+        navigate("/login");
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, [navigate]);
 
   return (
     <div className="animate-page">
@@ -40,25 +53,10 @@ const AnimatedRoutes = () => {
 };
 
 const App = () => {
-  const navigate = useNavigate();
   const { atualizacaoDisponivel, versaoRemota, carregando, mensagem, forcarAtualizacao, urlDownload: urlDownloadRemoto } = useAtualizacoes(VERSAO_ATUAL);
   const [dispensado, setDispensado] = useState(false);
   const [mostrarDownload, setMostrarDownload] = useState(false);
   const [urlDownload, setUrlDownload] = useState("");
-
-  useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        navigate("/tela-inicial");
-      } else {
-        navigate("/login");
-      }
-    });
-    return () => data.subscription.unsubscribe();
-  }, [navigate]);
-
-  const mostrarDialog =
-    !carregando && atualizacaoDisponivel && !dispensado;
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -73,7 +71,7 @@ const App = () => {
     <BrowserRouter>
       <AnimatedRoutes />
       <AtualizacaoDialog
-        aberto={mostrarDialog}
+        aberto={!carregando && atualizacaoDisponivel && !dispensado}
         versaoAtual={VERSAO_ATUAL}
         versaoRemota={versaoRemota || ""}
         mensagem={mensagem || "Uma nova versão está disponível!"}
