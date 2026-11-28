@@ -20,16 +20,21 @@ import ReportarProblema from "@/components/ReportarProblema";
 
 type Aba = "pendentes" | "historico" | "perfil";
 
+const LIMITE_LISTA = 20;
+
 const TelaEntregas = () => {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [abaAtiva, setAbaAtiva] = useState<Aba>("pendentes");
   const [pendentes, setPendentes] = useState<any[]>([]);
+  const [pendentesPagina, setPendentesPagina] = useState(LIMITE_LISTA);
   const [historico, setHistorico] = useState<any[]>([]);
+  const [historicoPagina, setHistoricoPagina] = useState(LIMITE_LISTA);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [mostrarConfirmacaoLogout, setMostrarConfirmacaoLogout] = useState(false);
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [mostrarModalAdicionar, setMostrarModalAdicionar] = useState(false);
   const [nomeBusca, setNomeBusca] = useState("");
   const [resultadosBusca, setResultadosBusca] = useState<any[]>([]);
@@ -46,34 +51,43 @@ const TelaEntregas = () => {
     }
   }, [navigate]);
 
-  const carregarPendentes = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("encomendas")
-          .select("*")
-          .eq("nome_entregador", nome)
-          .in("status", ["pronta", "aguardando_confirmacao"])
-          .order("created_at", { ascending: false });
-  
-        if (error) {
-          setErro("Erro ao carregar encomendas. Tente novamente.");
-          return;
-        }
-  
-        setPendentes(data || []);
-      } catch {
-        setErro("Erro de conexão. Verifique sua internet e tente novamente.");
+  // Revoga URL do objeto quando o componente desmonta ou troca a foto
+  useEffect(() => {
+    return () => {
+      if (fotoUrl) {
+        URL.revokeObjectURL(fotoUrl);
       }
     };
+  }, [fotoUrl]);
+
+  const carregarPendentes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("encomendas")
+        .select("*")
+        .eq("nome_entregador", nome)
+        .in("status", ["pronta", "aguardando_confirmacao"])
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        setErro("Erro ao carregar encomendas. Tente novamente.");
+        return;
+      }
+
+      setPendentes(data || []);
+    } catch {
+      setErro("Erro de conexão. Verifique sua internet e tente novamente.");
+    }
+  };
 
   const carregarHistorico = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("encomendas")
-          .select("*")
-          .eq("nome_entregador", nome)
-          .eq("status", "retirada")
-          .order("retirado_em", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("encomendas")
+        .select("*")
+        .eq("nome_entregador", nome)
+        .eq("status", "retirada")
+        .order("retirado_em", { ascending: false });
 
       if (error) return;
       if (data) setHistorico(data);
@@ -128,9 +142,15 @@ const TelaEntregas = () => {
     return () => clearTimeout(timer);
   }, [nomeBusca]);
 
+  const LIMITE_NOMES = 50;
+
   const adicionarNomeLista = (nomeCompleto: string) => {
     if (!nomeCompleto.trim()) return;
     if (nomesSelecionados.includes(nomeCompleto.trim())) return;
+    if (nomesSelecionados.length >= LIMITE_NOMES) {
+      alert(`Limite de ${LIMITE_NOMES} nomes por vez.`);
+      return;
+    }
 
     setNomesSelecionados([...nomesSelecionados, nomeCompleto.trim()]);
     setNomeBusca("");
@@ -142,37 +162,37 @@ const TelaEntregas = () => {
   };
 
   const confirmarAdicao = async () => {
-      if (nomesSelecionados.length === 0) {
-        alert("Adicione pelo menos um nome antes de confirmar.");
-        return;
-      }
-  
-      try {
-              for (const nomeDestinatario of nomesSelecionados) {
-                              const { error } = await supabase.from("encomendas").insert({
-                                codigo: `ENV-${Date.now()}`,
-                                nome_destinatario: nomeDestinatario,
-                                nome_entregador: nome,
-                                status: "pronta",
-                              });
-  
-          if (error) {
-            console.error("Erro detalhado:", error);
-            alert(`Erro ao adicionar encomenda para ${nomeDestinatario}: ${error.message || "Erro desconhecido"}`);
-            return;
-          }
+    if (nomesSelecionados.length === 0) {
+      alert("Adicione pelo menos um nome antes de confirmar.");
+      return;
+    }
+
+    try {
+      for (const nomeDestinatario of nomesSelecionados) {
+        const { error } = await supabase.from("encomendas").insert({
+          codigo: `ENV-${Date.now()}`,
+          nome_destinatario: nomeDestinatario,
+          nome_entregador: nome,
+          status: "pronta",
+        });
+
+        if (error) {
+          console.error("Erro detalhado:", error);
+          alert(`Erro ao adicionar encomenda para ${nomeDestinatario}: ${error.message || "Erro desconhecido"}`);
+          return;
         }
-  
-        setMostrarModalAdicionar(false);
-        setNomesSelecionados([]);
-        setNomeBusca("");
-        setResultadosBusca([]);
-        carregarDados();
-      } catch (err: any) {
-        console.error("Erro catch:", err);
-        alert(`Erro de conexão: ${err?.message || "Verifique sua internet e tente novamente."}`);
       }
-    };
+
+      setMostrarModalAdicionar(false);
+      setNomesSelecionados([]);
+      setNomeBusca("");
+      setResultadosBusca([]);
+      carregarDados();
+    } catch (err: any) {
+      console.error("Erro catch:", err);
+      alert(`Erro de conexão: ${err?.message || "Verifique sua internet e tente novamente."}`);
+    }
+  };
 
   const confirmarEntrega = async (id: string) => {
     try {
@@ -207,11 +227,13 @@ const TelaEntregas = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFotoPerfil(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    if (fotoUrl) {
+      URL.revokeObjectURL(fotoUrl);
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setFotoUrl(objectUrl);
+    setFotoPerfil(objectUrl);
   };
 
   const sair = () => {
@@ -267,7 +289,7 @@ const TelaEntregas = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {pendentes.map((encomenda) => (
+                  {pendentes.slice(0, pendentesPagina).map((encomenda) => (
                     <div
                       key={encomenda.id}
                       className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
@@ -291,6 +313,14 @@ const TelaEntregas = () => {
                       </span>
                     </div>
                   ))}
+                  {pendentes.length > pendentesPagina && (
+                    <button
+                      onClick={() => setPendentesPagina((p) => p + LIMITE_LISTA)}
+                      className="w-full py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                      Carregar mais
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -317,7 +347,7 @@ const TelaEntregas = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {historico.map((item) => (
+                  {historico.slice(0, historicoPagina).map((item) => (
                     <div
                       key={item.id}
                       className="p-4 bg-slate-50 rounded-2xl border border-slate-200"
@@ -346,6 +376,14 @@ const TelaEntregas = () => {
                       </div>
                     </div>
                   ))}
+                  {historico.length > historicoPagina && (
+                    <button
+                      onClick={() => setHistoricoPagina((p) => p + LIMITE_LISTA)}
+                      className="w-full py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                      Carregar mais
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -382,18 +420,18 @@ const TelaEntregas = () => {
                   </label>
                 </div>
                 <p className="text-sm text-slate-500 mt-3">
-                                  {nome || "Entregador"}
-                                </p>
-                                <p className="text-xs text-slate-400">
-                                  Entregador
-                                </p>
-                                <ReportarProblema
-                                  usuarioNome={nome || "Entregador"}
-                                  usuarioTipo="entregador"
-                                />
-                              </div>
-                            </div>
-                          )}
+                  {nome || "Entregador"}
+                </p>
+                <p className="text-xs text-slate-400">
+                  Entregador
+                </p>
+                <ReportarProblema
+                  usuarioNome={nome || "Entregador"}
+                  usuarioTipo="entregador"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -18,11 +18,14 @@ import ReportarProblema from "@/components/ReportarProblema";
 
 type Aba = "inicio" | "encomendas" | "perfil";
 
+const LIMITE_LISTA = 20;
+
 const Index = () => {
   const navigate = useNavigate();
   const [usuarioNome, setUsuarioNome] = useState("");
   const [abaAtiva, setAbaAtiva] = useState<Aba>("inicio");
   const [encomendas, setEncomendas] = useState<any[]>([]);
+  const [encomendasPagina, setEncomendasPagina] = useState(LIMITE_LISTA);
   const [historico, setHistorico] = useState<any[]>([
     {
       id: "sim-1",
@@ -34,23 +37,31 @@ const Index = () => {
       status: "retirada",
     },
   ]);
+  const [historicoPagina, setHistoricoPagina] = useState(LIMITE_LISTA);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [mostrarConfirmacaoLogout, setMostrarConfirmacaoLogout] = useState(false);
-    const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const nomeSalvo = localStorage.getItem("usuario_nome");
     if (nomeSalvo) {
       setUsuarioNome(nomeSalvo);
     } else {
-      // Para desenvolvimento: permite acesso direto a /tela-inicial com usuário de teste
-      // Em produção, remova este bloco e descomente o redirect para /login
       setUsuarioNome("Usuário Teste");
       localStorage.setItem("usuario_nome", "Usuário Teste");
-      // navigate("/login");
     }
   }, [navigate]);
+
+  // Revoga URL do objeto quando o componente desmonta ou troca a foto
+  useEffect(() => {
+    return () => {
+      if (fotoUrl) {
+        URL.revokeObjectURL(fotoUrl);
+      }
+    };
+  }, [fotoUrl]);
 
   useEffect(() => {
     const carregarEncomendas = async () => {
@@ -58,12 +69,12 @@ const Index = () => {
       setErro("");
 
       try {
-              const { data, error } = await supabase
-                .from("encomendas")
-                .select("*")
-                .eq("status", "pronta")
-                .eq("nome_destinatario", usuarioNome)
-                .order("created_at", { ascending: false });
+        const { data, error } = await supabase
+          .from("encomendas")
+          .select("*")
+          .eq("status", "pronta")
+          .eq("nome_destinatario", usuarioNome)
+          .order("created_at", { ascending: false });
 
         if (error) {
           setErro("Erro ao carregar encomendas. Tente novamente.");
@@ -113,12 +124,12 @@ const Index = () => {
   useEffect(() => {
     const carregarHistorico = async () => {
       try {
-              const { data, error } = await supabase
-                .from("encomendas")
-                .select("*")
-                .eq("status", "retirada")
-                .eq("nome_destinatario", usuarioNome)
-                .order("retirado_em", { ascending: false });
+        const { data, error } = await supabase
+          .from("encomendas")
+          .select("*")
+          .eq("status", "retirada")
+          .eq("nome_destinatario", usuarioNome)
+          .order("retirado_em", { ascending: false });
 
         if (error) return;
         if (data && data.length > 0) {
@@ -146,11 +157,13 @@ const Index = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFotoPerfil(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    if (fotoUrl) {
+      URL.revokeObjectURL(fotoUrl);
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setFotoUrl(objectUrl);
+    setFotoPerfil(objectUrl);
   };
 
   return (
@@ -200,7 +213,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {encomendas.map((encomenda) => {
+                  {encomendas.slice(0, encomendasPagina).map((encomenda) => {
                     const jaConfirmada = historico.some((h) => h.id === encomenda.id);
 
                     return (
@@ -230,6 +243,14 @@ const Index = () => {
                       </div>
                     );
                   })}
+                  {encomendas.length > encomendasPagina && (
+                    <button
+                      onClick={() => setEncomendasPagina((p) => p + LIMITE_LISTA)}
+                      className="w-full py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                      Carregar mais
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -252,7 +273,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {historico.map((item) => (
+                  {historico.slice(0, historicoPagina).map((item) => (
                     <div
                       key={item.id}
                       className="p-4 bg-slate-50 rounded-2xl border border-slate-200"
@@ -293,56 +314,64 @@ const Index = () => {
                       </div>
                     </div>
                   ))}
+                  {historico.length > historicoPagina && (
+                    <button
+                      onClick={() => setHistoricoPagina((p) => p + LIMITE_LISTA)}
+                      className="w-full py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                      Carregar mais
+                    </button>
+                  )}
                 </div>
               )}
             </div>
           )}
 
           {abaAtiva === "perfil" && (
-                      <div className="bg-white rounded-3xl shadow-xl p-6">
-                        <h2 className="text-lg font-semibold text-slate-900 mb-4">Perfil</h2>
-                        <div className="flex flex-col items-center mb-6">
-                          <div className="relative">
-                            <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden">
-                              {fotoPerfil ? (
-                                <img
-                                  src={fotoPerfil}
-                                  alt="Foto de perfil"
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <User className="w-12 h-12 text-indigo-600" />
-                              )}
-                            </div>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              id="foto-perfil"
-                              onChange={handleFotoPerfil}
-                            />
-                            <label
-                              htmlFor="foto-perfil"
-                              className="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors"
-                            >
-                              <Camera className="w-4 h-4" />
-                            </label>
-                          </div>
-                          <p className="text-sm text-slate-500 mt-3">
-                            {usuarioNome || "Visitante"}
-                          </p>
-                          <p className="text-xs text-slate-400">
-                            Usuário de teste para demonstração
-                          </p>
-                        </div>
-                        <div className="mt-6">
-                          <ReportarProblema
-                            usuarioNome={usuarioNome || "Visitante"}
-                            usuarioTipo="cliente"
-                          />
-                        </div>
-                      </div>
+            <div className="bg-white rounded-3xl shadow-xl p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">Perfil</h2>
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden">
+                    {fotoPerfil ? (
+                      <img
+                        src={fotoPerfil}
+                        alt="Foto de perfil"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-12 h-12 text-indigo-600" />
                     )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="foto-perfil"
+                    onChange={handleFotoPerfil}
+                  />
+                  <label
+                    htmlFor="foto-perfil"
+                    className="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </label>
+                </div>
+                <p className="text-sm text-slate-500 mt-3">
+                  {usuarioNome || "Visitante"}
+                </p>
+                <p className="text-xs text-slate-400">
+                  Usuário de teste para demonstração
+                </p>
+              </div>
+              <div className="mt-6">
+                <ReportarProblema
+                  usuarioNome={usuarioNome || "Visitante"}
+                  usuarioTipo="cliente"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
