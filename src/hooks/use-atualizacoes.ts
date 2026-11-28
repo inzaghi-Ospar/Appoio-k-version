@@ -22,6 +22,22 @@ interface EstadoAtualizacao {
   erro: string | null;
 }
 
+// Função de comparação de versão movida para nível de módulo
+// Isso evita que a função seja recriada a cada render do hook,
+// prevenindo o usoEffect de disparar a cada render (gargalo de CPU)
+export const compararVersoes = (v1: string, v2: string): number => {
+  const partes1 = v1.split(".").map(Number);
+  const partes2 = v2.split(".").map(Number);
+
+  for (let i = 0; i < Math.max(partes1.length, partes2.length); i++) {
+    const p1 = partes1[i] || 0;
+    const p2 = partes2[i] || 0;
+    if (p1 > p2) return 1;
+    if (p1 < p2) return -1;
+  }
+  return 0;
+};
+
 export const useAtualizacoes = (versaoAtual: string) => {
   const [estado, setEstado] = useState<EstadoAtualizacao>({
     status: "ocioso",
@@ -33,19 +49,6 @@ export const useAtualizacoes = (versaoAtual: string) => {
     urlDownload: "",
     erro: null,
   });
-
-  const compararVersoes = (v1: string, v2: string): number => {
-    const partes1 = v1.split(".").map(Number);
-    const partes2 = v2.split(".").map(Number);
-
-    for (let i = 0; i < Math.max(partes1.length, partes2.length); i++) {
-      const p1 = partes1[i] || 0;
-      const p2 = partes2[i] || 0;
-      if (p1 > p2) return 1;
-      if (p1 < p2) return -1;
-    }
-    return 0;
-  };
 
   const verificarAtualizacao = useCallback(async () => {
     setEstado((prev) => ({ ...prev, status: "verificando", erro: null }));
@@ -102,7 +105,7 @@ export const useAtualizacoes = (versaoAtual: string) => {
         erro: "Erro ao verificar atualização",
       }));
     }
-  }, [versaoAtual, compararVersoes]);
+  }, [versaoAtual]);
 
   const baixarEInstalar = useCallback(async () => {
     const url = estado.urlDownload;

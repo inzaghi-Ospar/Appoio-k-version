@@ -26,8 +26,12 @@ const LoginEntregador = () => {
   const [cpfBusca, setCpfBusca] = useState("");
   const [entregadorEncontradoCpf, setEntregadorEncontradoCpf] = useState<{ nome_completo: string; senha: string } | null>(null);
   const [buscandoCpf, setBuscandoCpf] = useState(false);
-
-  useEffect(() => {
+    const [cliquesIcone, setCliquesIcone] = useState(0);
+    const [mostrarPopupAdmin, setMostrarPopupAdmin] = useState(false);
+    const [codigoDigitado, setCodigoDigitado] = useState("");
+    const [mensagemErroCodigo, setMensagemErroCodigo] = useState("");
+  
+    useEffect(() => {
     window.history.pushState({ appoio: true }, "", window.location.href);
 
     const handlePopState = () => {
@@ -147,6 +151,45 @@ const LoginEntregador = () => {
     } finally {
       setCarregando(false);
     }
+  };
+
+  const handleCliqueIcone = () => {
+    const novoTotal = cliquesIcone + 1;
+    if (novoTotal >= 10) {
+      setCliquesIcone(0);
+      setMostrarPopupAdmin(true);
+      setCodigoDigitado("");
+      setMensagemErroCodigo("");
+    } else {
+      setCliquesIcone(novoTotal);
+    }
+  };
+
+  const verificarCodigoAdmin = async () => {
+    if (codigoDigitado === "0127183876116669674759") {
+      setMostrarPopupAdmin(false);
+      setCodigoDigitado("");
+      setMensagemErroCodigo("");
+      navigate("/tela-admin");
+      return;
+    }
+
+    const usuarioLogado =
+      localStorage.getItem("usuario_nome") ||
+      localStorage.getItem("entregador_nome") ||
+      "Desconhecido";
+
+    try {
+      await supabase.from("admin_tentativas").insert({
+        usuario_nome_falhou: usuarioLogado,
+        dispositivo_id: navigator.userAgent,
+      });
+    } catch (err) {
+      console.error("Erro ao registrar tentativa:", err);
+    }
+
+    setMensagemErroCodigo("Código incorreto.");
+    setCodigoDigitado("");
   };
 
   return (
@@ -283,7 +326,7 @@ const LoginEntregador = () => {
         ) : (
           <>
             <div className="text-center mb-5">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-3">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-3 cursor-pointer hover:bg-indigo-200 transition-colors" onClick={handleCliqueIcone}>
                 <Package className="w-6 h-6" />
               </div>
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
@@ -373,19 +416,71 @@ const LoginEntregador = () => {
               </div>
 
               <Button
-                type="button"
-                variant="ghost"
-                className="w-full text-sm text-slate-500 hover:text-slate-800"
-                onClick={() => navigate("/esqueci-senha")}
-              >
-                Esqueceu sua senha?
-              </Button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
-  );
+                              type="button"
+                              variant="ghost"
+                              className="w-full text-sm text-slate-500 hover:text-slate-800"
+                              onClick={() => navigate("/esqueci-senha")}
+                            >
+                              Esqueceu sua senha?
+                            </Button>
+                          </form>
+                          {mostrarPopupAdmin && (
+                            <div
+                              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+                            >
+                              <div
+                                className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-md mx-auto"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <h2 className="text-xl font-bold text-slate-900 mb-4">
+                                  Acesso ao Admin
+                                </h2>
+                                <p className="text-sm text-slate-500 mb-6">
+                                  Digite o código numérico para acessar o painel administrativo:
+                                </p>
+                                <div className="space-y-4">
+                                  <div>
+                                    <label htmlFor="codigo" className="block text-sm font-medium text-slate-700 mb-2">
+                                      Código
+                                    </label>
+                                    <Input
+                                      id="codigo"
+                                      type="number"
+                                      value={codigoDigitado}
+                                      onChange={(e) => setCodigoDigitado(e.target.value)}
+                                      maxLength="20"
+                                      className={mensagemErroCodigo ? "border-destructive" : ""}
+                                    />
+                                    {mensagemErroCodigo && (
+                                      <p className="text-sm text-destructive mt-2">{mensagemErroCodigo}</p>
+                                    )}
+                                  </div>
+                                  <div className="flex gap-3">
+                                    <Button
+                                      type="button"
+                                      onClick={verificarCodigoAdmin}
+                                      className="flex-1 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      disabled={!codigoDigitado}
+                                    >
+                                      Confirmar
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      onClick={() => setMostrarPopupAdmin(false)}
+                                      className="flex-1 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      Cancelar
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
 };
 
 export default LoginEntregador;

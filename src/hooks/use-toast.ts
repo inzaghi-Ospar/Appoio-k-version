@@ -175,6 +175,9 @@ function useToast() {
       if (index > -1) {
         listeners.splice(index, 1);
       }
+      // Limpa todos os timeouts pendentes ao desmontar o componente
+      toastTimeouts.forEach((timeout) => clearTimeout(timeout));
+      toastTimeouts.clear();
     };
   }, [state]);
 

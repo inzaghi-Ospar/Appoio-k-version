@@ -92,35 +92,41 @@ const TelaEntregas = () => {
     setCarregando(false);
   };
 
-  const buscarNomesCadastro = async (e: ChangeEvent<HTMLInputElement>) => {
-    const valor = e.target.value;
-    setNomeBusca(valor);
+  const buscarNomesCadastro = (e: ChangeEvent<HTMLInputElement>) => {
+    setNomeBusca(e.target.value);
+  };
 
-    if (!valor || valor.length < 2) {
-      setResultadosBusca([]);
-      return;
-    }
-
-    setBuscando(true);
-    try {
-      const { data, error } = await supabase
-        .from("cadastros")
-        .select("nome_completo")
-        .ilike("nome_completo", `%${valor}%`)
-        .limit(10);
-
-      if (error) {
+  // Debounce: evita requisições Supabase a cada tecla digitada
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (!nomeBusca || nomeBusca.length < 2) {
         setResultadosBusca([]);
         return;
       }
 
-      setResultadosBusca(data || []);
-    } catch {
-      setResultadosBusca([]);
-    } finally {
-      setBuscando(false);
-    }
-  };
+      setBuscando(true);
+      try {
+        const { data, error } = await supabase
+          .from("cadastros")
+          .select("nome_completo")
+          .ilike("nome_completo", `%${nomeBusca}%`)
+          .limit(10);
+
+        if (error) {
+          setResultadosBusca([]);
+          return;
+        }
+
+        setResultadosBusca(data || []);
+      } catch {
+        setResultadosBusca([]);
+      } finally {
+        setBuscando(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [nomeBusca]);
 
   const adicionarNomeLista = (nomeCompleto: string) => {
     if (!nomeCompleto.trim()) return;

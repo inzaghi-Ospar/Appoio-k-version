@@ -25,7 +25,7 @@ const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
-    <div key={location.pathname} className="animate-page">
+    <div className="animate-page">
       <Routes location={location}>
         <Route path="/" element={<Welcome />} />
         <Route path="/login" element={<Login />} />

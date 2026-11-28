@@ -82,9 +82,32 @@ const Index = () => {
 
     carregarEncomendas();
 
-    const intervalo = setInterval(carregarEncomendas, 10 * 60 * 1000);
+    let intervalo: ReturnType<typeof setInterval>;
 
-    return () => clearInterval(intervalo);
+    const iniciarIntervalo = () => {
+      intervalo = setInterval(carregarEncomendas, 10 * 60 * 1000);
+    };
+
+    const pararIntervalo = () => {
+      clearInterval(intervalo);
+    };
+
+    iniciarIntervalo();
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        pararIntervalo();
+      } else {
+        iniciarIntervalo();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(intervalo);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   useEffect(() => {
