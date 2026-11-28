@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  getRateLimitRemainingMs,
+  recordAttempt,
+  formatWaitTime,
+  RATE_LIMITS,
+} from "@/lib/rate-limit";
 
 const EsqueciSenha = () => {
   const navigate = useNavigate();
@@ -25,12 +31,21 @@ const EsqueciSenha = () => {
     setErroGeral("");
     setCarregando(true);
 
+    const rlKey = `password-reset:${email.trim().toLowerCase()}`;
+    const waitMs = getRateLimitRemainingMs(rlKey, RATE_LIMITS.passwordReset);
+    if (waitMs > 0) {
+      setErroGeral(`Muitas tentativas. Tente novamente em ${formatWaitTime(waitMs)}.`);
+      setCarregando(false);
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/reset-senha`,
       });
 
       if (error) {
+        recordAttempt(rlKey, RATE_LIMITS.passwordReset);
         setErroGeral(error.message || "Erro ao enviar email de recuperação.");
         return;
       }

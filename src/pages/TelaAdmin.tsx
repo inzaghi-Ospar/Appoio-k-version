@@ -26,7 +26,7 @@ const TelaAdmin = () => {
           id: user.id,
           nome_completo: user.user_metadata?.nome_completo || user.email || "Admin",
           email: user.email || "",
-          is_admin: user.user_metadata?.is_admin === true,
+          is_admin: user.app_metadata?.is_admin === true,
         });
       } else {
         setUsuario(null);
@@ -37,36 +37,27 @@ const TelaAdmin = () => {
   }, [navigate]);
 
   useEffect(() => {
-    if (!usuario) return;
-
-    const carregarTentativas = async () => {
-      const { data } = await supabase
-        .from("admin_tentativas")
-        .select("*")
-        .order("timestamp", { ascending: false })
-        .limit(20);
-
-      if (data) setTentativas(data);
-      setCarregando(false);
-    };
-
-    carregarTentativas();
-
-    const canal = supabase
-      .channel("admin_tentativas_realtime")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "admin_tentativas" },
-        (payload) => {
-          setTentativas((prev) => [payload.new as Tentativa, ...prev]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [usuario]);
+      if (!usuario) return;
+  
+      const carregarTentativas = async () => {
+        const { data } = await supabase
+          .from("admin_tentativas")
+          .select("*")
+          .order("timestamp", { ascending: false })
+          .limit(20);
+  
+        if (data) setTentativas(data);
+        setCarregando(false);
+      };
+  
+      carregarTentativas();
+  
+      const intervalo = setInterval(() => {
+        carregarTentativas();
+      }, 10 * 1000);
+  
+      return () => clearInterval(intervalo);
+    }, [usuario]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

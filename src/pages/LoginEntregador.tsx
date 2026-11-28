@@ -6,6 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { formatarCpf } from "@/lib/format";
+import {
+  getRateLimitRemainingMs,
+  recordAttempt,
+  clearAttempts,
+  formatWaitTime,
+  RATE_LIMITS,
+} from "@/lib/rate-limit";
 
 const LoginEntregador = () => {
   const navigate = useNavigate();
@@ -46,75 +53,96 @@ const LoginEntregador = () => {
   };
 
   const buscarPorCpf = async () => {
-    const digitosCpf = cpfBusca.replace(/\D/g, "");
-    if (!digitosCpf || digitosCpf.length !== 11) {
-      setErro("CPF inválido. Digite um CPF com 11 dígitos.");
-      return;
-    }
-
-    setBuscandoCpf(true);
-    setErro("");
-
-    try {
-      const { data: entregador, error } = await supabase
-        .from("cadastros")
-        .select("nome_completo, cpf")
-        .eq("cpf", digitosCpf)
-        .maybeSingle();
-
-      if (error) {
-        setErro("Erro ao buscar por CPF. Tente novamente.");
+      const digitosCpf = cpfBusca.replace(/\D/g, "");
+      if (!digitosCpf || digitosCpf.length !== 11) {
+        setErro("CPF inválido. Digite um CPF com 11 dígitos.");
         return;
       }
-
-      if (!entregador) {
-        const cpfFormatado = formatarCpf(digitosCpf);
-        const resultado = await supabase
+  
+      const rlKey = `cpf-search:${digitosCpf}`;
+      const waitMs = getRateLimitRemainingMs(rlKey, RATE_LIMITS.cpfSearch);
+      if (waitMs > 0) {
+        setErro(`Muitas tentativas. Tente novamente em ${formatWaitTime(waitMs)}.`);
+        return;
+      }
+  
+      setBuscandoCpf(true);
+      setErro("");
+  
+      try {
+        let entregador: { nome_completo: string; cpf?: string } | null = null;
+        const { data: entregadorData, error } = await supabase
           .from("cadastros")
           .select("nome_completo, cpf")
-          .eq("cpf", cpfFormatado)
+          .eq("cpf", digitosCpf)
           .maybeSingle();
-        entregador = resultado.data;
+  
+        entregador = entregadorData;
+  
+        if (error) {
+          setErro("Erro ao buscar por CPF. Tente novamente.");
+          return;
+        }
+  
+        if (!entregador) {
+          const cpfFormatado = formatarCpf(digitosCpf);
+          const resultado = await supabase
+            .from("cadastros")
+            .select("nome_completo, cpf")
+            .eq("cpf", cpfFormatado)
+            .maybeSingle();
+          entregador = resultado.data;
+        }
+  
+        if (!entregador) {
+          recordAttempt(rlKey, RATE_LIMITS.cpfSearch);
+          setErro("Nenhum entregador encontrado com este CPF.");
+          return;
+        }
+  
+        setModoBuscaCpf(false);
+        setEntregadorEncontradoCpf(entregador);
+      } catch {
+        setErro("Erro de conexão. Verifique sua internet e tente novamente.");
+      } finally {
+        setBuscandoCpf(false);
       }
-
-      if (!entregador) {
-        setErro("Nenhum entregador encontrado com este CPF.");
-        return;
-      }
-
-      setModoBuscaCpf(false);
-      setEntregadorEncontradoCpf(entregador);
-    } catch {
-      setErro("Erro de conexão. Verifique sua internet e tente novamente.");
-    } finally {
-      setBuscandoCpf(false);
-    }
-  };
+    };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErro("");
-    setCarregando(true);
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: senha,
-      });
-
-      if (error) {
-        setErro("Email ou senha incorretos.");
+      e.preventDefault();
+      setErro("");
+      setCarregando(true);
+  
+      const rlKey = `login:${email.trim().toLowerCase()}`;
+      const waitMs = getRateLimitRemainingMs(rlKey, RATE_LIMITS.login);
+      if (waitMs > 0) {
+        setErro(`Muitas tentativas de login. Tente novamente em ${formatWaitTime(waitMs)}.`);
+        setCarregando(false);
         return;
       }
-
-      navigate("/tela-entregas");
-    } catch (err: any) {
-      console.error("Erro conexão login entregador:", err);
-      setErro(`Houve um erro de conexão: ${err?.message || "Verifique sua internet e tente novamente."}`);
-    } finally {
-      setCarregando(false);
-    }
-  };
+  
+      try {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: senha,
+        });
+  
+        if (error) {
+          recordAttempt(rlKey, RATE_LIMITS.login);
+          setErro("Email ou senha incorretos.");
+          return;
+        }
+  
+        clearAttempts(rlKey);
+        navigate("/tela-entregas");
+      } catch (err: any) {
+        console.error("Erro conexão login entregador:", err);
+        setErro(`Houve um erro de conexão: ${err?.message || "Verifique sua internet e tente novamente."}`);
+      } finally {
+        setCarregando(false);
+      }
+    };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F4F1EC] p-4">
