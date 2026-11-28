@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import ReportarProblema from "@/components/ReportarProblema";
+import { formatarData } from "@/lib/format";
 
 type Aba = "pendentes" | "historico" | "perfil";
 
@@ -211,16 +212,6 @@ const TelaEntregas = () => {
     } catch {
       alert("Erro de conexão. Verifique sua internet e tente novamente.");
     }
-  };
-
-  const formatarData = (data: string) => {
-    return new Date(data).toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const handleFotoPerfil = (e: ChangeEvent<HTMLInputElement>) => {

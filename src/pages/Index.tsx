@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import ReportarProblema from "@/components/ReportarProblema";
+import { formatarData } from "@/lib/format";
 
 type Aba = "inicio" | "encomendas" | "perfil";
 
@@ -142,16 +143,6 @@ const Index = () => {
 
     carregarHistorico();
   }, []);
-
-  const formatarData = (data: string) => {
-    const d = new Date(data);
-    return d.toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   const handleFotoPerfil = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

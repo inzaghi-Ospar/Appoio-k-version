@@ -5,39 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-
-const formatarCpf = (valor: string) => {
-  const digitos = valor.replace(/\D/g, "").slice(0, 11);
-  if (!digitos) return "";
-  if (digitos.length <= 3) return digitos;
-  if (digitos.length <= 6) return `${digitos.slice(0, 3)}.${digitos.slice(3)}`;
-  if (digitos.length <= 9) return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6)}`;
-  return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-${digitos.slice(9)}`;
-};
-
-const validarCpf = (cpf: string) => {
-  const digitos = cpf.replace(/\D/g, "");
-  if (digitos.length !== 11) return false;
-  if (/^(\d)\1{10}$/.test(digitos)) return false;
-
-  let soma = 0;
-  for (let i = 0; i < 9; i++) {
-    soma += parseInt(digitos[i]) * (10 - i);
-  }
-  let resto = (soma * 10) % 11;
-  if (resto === 10 || resto === 11) resto = 0;
-  if (resto !== parseInt(digitos[9])) return false;
-
-  soma = 0;
-  for (let i = 0; i < 10; i++) {
-    soma += parseInt(digitos[i]) * (11 - i);
-  }
-  resto = (soma * 10) % 11;
-  if (resto === 10 || resto === 11) resto = 0;
-  if (resto !== parseInt(digitos[10])) return false;
-
-  return true;
-};
+import { formatarCpf, validarCpf } from "@/lib/format";
 
 const EsqueciSenha = () => {
   const navigate = useNavigate();

@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 
 interface VersaoRemota {
   versao: string;
@@ -107,83 +106,6 @@ export const useAtualizacoes = (versaoAtual: string) => {
     }
   }, [versaoAtual]);
 
-  const baixarEInstalar = useCallback(async () => {
-    const url = estado.urlDownload;
-    const versao = estado.versaoRemota;
-
-    if (!url || !versao) {
-      setEstado((prev) => ({ ...prev, status: "erro", erro: "URL de download inválida" }));
-      return;
-    }
-
-    setEstado((prev) => ({ ...prev, status: "baixando", progresso: 0, erro: null }));
-
-    try {
-      const resposta = await fetch(url);
-
-      if (!resposta.ok || !resposta.body) {
-        throw new Error("Falha ao baixar a atualização");
-      }
-
-      const tamanhoTotal = resposta.headers.get("content-length");
-      const total = tamanhoTotal ? parseInt(tamanhoTotal, 10) : 0;
-      const leitor = resposta.body.getReader();
-      const chunks: Uint8Array[] = [];
-      let recebido = 0;
-
-      while (true) {
-        const { done, value } = await leitor.read();
-
-        if (done) break;
-
-        chunks.push(value!);
-        recebido += value!.length;
-
-        if (total > 0) {
-          const percentual = Math.round((recebido / total) * 100);
-          setEstado((prev) => ({ ...prev, progresso: percentual }));
-        }
-      }
-
-      const blob = new Blob(chunks as unknown as BlobPart[]);
-      const arrayBuffer = await blob.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuffer);
-      const nomeArquivo = `appoio-${versao}.apk`;
-
-      const texto = String.fromCharCode(...bytes);
-      const base64 = btoa(texto);
-
-      await Filesystem.writeFile({
-        path: nomeArquivo,
-        data: base64,
-        directory: Directory.Documents,
-        encoding: Encoding.UTF8,
-      });
-
-      setEstado((prev) => ({ ...prev, status: "pronto", progresso: 100 }));
-
-      // Tentar abrir o APK para instalação
-      try {
-        const { uri } = await Filesystem.getUri({
-          path: nomeArquivo,
-          directory: Directory.Documents,
-        });
-
-        window.open(`file://${uri}`, "_blank");
-      } catch (err) {
-        console.error("Erro ao abrir APK:", err);
-        window.open(url, "_blank");
-      }
-    } catch (err: any) {
-      console.error("Erro ao baixar atualização:", err);
-      setEstado((prev) => ({
-        ...prev,
-        status: "erro",
-        erro: err.message || "Erro ao baixar atualização",
-      }));
-    }
-  }, [estado.urlDownload, estado.versaoRemota]);
-
   useEffect(() => {
     verificarAtualizacao();
   }, [verificarAtualizacao]);
@@ -193,6 +115,5 @@ export const useAtualizacoes = (versaoAtual: string) => {
     atualizacaoDisponivel: estado.status === "disponivel",
     carregando: estado.status === "verificando" || estado.status === "baixando",
     verificarAtualizacao,
-    baixarEInstalar,
   };
 };

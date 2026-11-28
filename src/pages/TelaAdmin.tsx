@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle } from "lucide-react";
+import { formatarData } from "@/lib/format";
 
 interface Tentativa {
   id: string;
@@ -40,16 +41,6 @@ const TelaAdmin = () => {
       supabase.removeChannel(canal);
     };
   }, []);
-
-  const formatarData = (data: string) => {
-    return new Date(data).toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   return (
     <div className="min-h-screen bg-[#F4F1EC] p-4">

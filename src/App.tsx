@@ -1,9 +1,5 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { lazy, Suspense, useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 const Index = lazy(() => import("./pages/Index"));
 const Login = lazy(() => import("./pages/Login"));
 const Cadastro = lazy(() => import("./pages/Cadastro"));
@@ -17,8 +13,6 @@ import AtualizacaoDialog from "@/components/AtualizacaoDialog";
 import { DownloadProgresso } from "@/components/DownloadProgresso";
 import { useAtualizacoes } from "@/hooks/use-atualizacoes";
 
-const queryClient = new QueryClient();
-
 const VERSAO_ATUAL = "0.1.0";
 
 const AnimatedRoutes = () => {
@@ -30,9 +24,9 @@ const AnimatedRoutes = () => {
       <Routes location={location}>
         <Route path="/" element={<Welcome />} />
         <Route path="/login" element={<Login />} />
-                <Route path="/login-entregador" element={<LoginEntregador />} />
-                <Route path="/tela-entregas" element={<TelaEntregas />} />
-                <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/login-entregador" element={<LoginEntregador />} />
+        <Route path="/tela-entregas" element={<TelaEntregas />} />
+        <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
         <Route path="/tela-inicial" element={<Index />} />
         <Route path="/tela-admin" element={<TelaAdmin />} />
@@ -63,31 +57,25 @@ const App = () => {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AnimatedRoutes />
-        </BrowserRouter>
-        <AtualizacaoDialog
-                  aberto={mostrarDialog}
-                  versaoAtual={VERSAO_ATUAL}
-                  versaoRemota={versaoRemota || ""}
-                  mensagem={mensagem || "Uma nova versão está disponível!"}
-                  forcarAtualizacao={forcarAtualizacao || false}
-                  urlDownload={urlDownloadRemoto || "https://play.google.com/store/apps/details?id=com.appoio.app"}
-                  onFechar={() => setDispensado(true)}
-                />
-        {mostrarDownload && (
-          <DownloadProgresso
-            url={urlDownload}
-            onFechar={() => setMostrarDownload(false)}
-            onInstalado={() => setMostrarDownload(false)}
-          />
-        )}
-      </TooltipProvider>
-    </QueryClientProvider>
+    <BrowserRouter>
+      <AnimatedRoutes />
+      <AtualizacaoDialog
+        aberto={mostrarDialog}
+        versaoAtual={VERSAO_ATUAL}
+        versaoRemota={versaoRemota || ""}
+        mensagem={mensagem || "Uma nova versão está disponível!"}
+        forcarAtualizacao={forcarAtualizacao || false}
+        urlDownload={urlDownloadRemoto || "https://play.google.com/store/apps/details?id=com.appoio.app"}
+        onFechar={() => setDispensado(true)}
+      />
+      {mostrarDownload && (
+        <DownloadProgresso
+          url={urlDownload}
+          onFechar={() => setMostrarDownload(false)}
+          onInstalado={() => setMostrarDownload(false)}
+        />
+      )}
+    </BrowserRouter>
   );
 };
 
